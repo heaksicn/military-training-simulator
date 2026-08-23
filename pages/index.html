@@ -1,0 +1,2348 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>军训文字模拟器 · 冲旗！</title>
+    <style id="theme-vars">
+:root {
+  --brand-prefix: brand;
+
+  /* Base palette */
+  --brand-bg: #F7F5F0;
+  --brand-surface: #EFEBE0;
+  --brand-surface-2: #E6E0D1;
+  --brand-ink: #1F1D1A;
+  --brand-ink-2: #5A564D;
+  --brand-ink-3: #8A8478;
+  --brand-line: #D8D2C4;
+
+  /* Primary hue: olive drab */
+  --brand-primary: #4A5D23;
+  --brand-primary-light: #5F7630;
+  --brand-primary-dark: #37471A;
+  --brand-primary-ink: #FFFFFF;
+
+  /* Semantic aliases required by head contract */
+  --brand-background: var(--brand-bg);
+  --brand-foreground: var(--brand-ink);
+  --brand-card: var(--brand-surface);
+  --brand-card-foreground: var(--brand-ink);
+  --brand-popover: var(--brand-surface-2);
+  --brand-popover-foreground: var(--brand-ink);
+  --brand-primary-foreground: var(--brand-primary-ink);
+  --brand-muted: var(--brand-surface-2);
+  --brand-muted-foreground: var(--brand-ink-2);
+  --brand-border: var(--brand-line);
+  --brand-input: var(--brand-line);
+  --brand-ring: var(--brand-primary);
+
+  /* Radius scale */
+  --brand-radius-xs: 2px;
+  --brand-radius-sm: 4px;
+  --brand-radius-md: 8px;
+  --brand-radius-lg: 16px;
+  --brand-radius-pill: 999px;
+
+  /* Shadows */
+  --brand-shadow-1: 0 1px 2px rgba(31, 29, 26, 0.05), 0 1px 1px rgba(31, 29, 26, 0.03);
+  --brand-floating-shadow-1: 0 8px 24px -8px rgba(31, 29, 26, 0.18);
+  --brand-floating-shadow-2: 0 24px 60px -20px rgba(31, 29, 26, 0.30);
+
+  /* State colors */
+  --brand-state-success: #2D6A4F;
+  --brand-state-warning: #B35900;
+  --brand-state-error: #9B2335;
+  --brand-state-info: #3A5F7A;
+
+  /* Typography */
+  --brand-font-sans: "Inter", "Noto Sans SC", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+  --brand-font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+
+  /* Spacing */
+  --brand-space-1: 4px;
+  --brand-space-2: 8px;
+  --brand-space-3: 12px;
+  --brand-space-4: 16px;
+  --brand-space-5: 24px;
+  --brand-space-6: 32px;
+  --brand-space-7: 48px;
+  --brand-space-8: 80px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--brand-font-sans);
+  background-color: var(--brand-bg);
+  color: var(--brand-ink);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  min-height: 100vh;
+}
+
+/* ==========================================================================
+   Game layout & components
+   ========================================================================== */
+
+#critical-layout {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.game-container {
+  width: 100%;
+  max-width: 720px;
+  margin: 0 auto;
+  padding: var(--brand-space-5) var(--brand-space-4);
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.screen {
+  display: none;
+  animation: fadeIn 320ms cubic-bezier(.3,0,0,1);
+}
+
+.screen.active {
+  display: flex;
+  flex-direction: column;
+  gap: var(--brand-space-5);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.app-header {
+  text-align: center;
+  padding: var(--brand-space-5) 0;
+  border-bottom: 1px solid var(--brand-line);
+}
+
+.app-title {
+  font-size: clamp(28px, 5vw, 40px);
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  color: var(--brand-primary);
+  margin: 0 0 var(--brand-space-2) 0;
+}
+
+.app-subtitle {
+  font-size: 15px;
+  color: var(--brand-ink-2);
+  margin: 0;
+}
+
+.card {
+  background-color: var(--brand-surface);
+  border: 1px solid var(--brand-line);
+  border-radius: var(--brand-radius-md);
+  padding: var(--brand-space-5);
+  box-shadow: var(--brand-shadow-1);
+}
+
+.intro-text {
+  font-size: 17px;
+  line-height: 1.7;
+  color: var(--brand-ink);
+  margin: 0 0 var(--brand-space-5) 0;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(1, 1fr);
+  gap: var(--brand-space-3);
+}
+
+@media (min-width: 640px) {
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.stat-row {
+  display: flex;
+  align-items: center;
+  gap: var(--brand-space-3);
+}
+
+.stat-icon {
+  width: 36px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--brand-radius-md);
+  background-color: var(--brand-surface-2);
+  color: var(--brand-primary);
+  flex-shrink: 0;
+}
+
+.stat-icon svg {
+  width: 20px;
+  height: 20px;
+}
+
+.stat-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.stat-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: var(--brand-space-1);
+}
+
+.stat-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--brand-ink);
+}
+
+.stat-value {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--brand-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.stat-bar {
+  height: 8px;
+  background-color: var(--brand-surface-2);
+  border-radius: var(--brand-radius-pill);
+  overflow: hidden;
+}
+
+.stat-fill {
+  height: 100%;
+  background-color: var(--brand-primary);
+  border-radius: var(--brand-radius-pill);
+  transition: width 500ms cubic-bezier(.3,0,0,1);
+}
+
+.stat-fill.low { background-color: var(--brand-state-error); }
+.stat-fill.medium { background-color: var(--brand-state-warning); }
+.stat-fill.high { background-color: var(--brand-primary); }
+
+.progress-bar {
+  height: 6px;
+  background-color: var(--brand-line);
+  border-radius: var(--brand-radius-pill);
+  overflow: hidden;
+  margin-top: var(--brand-space-2);
+}
+
+.progress-fill {
+  height: 100%;
+  background-color: var(--brand-primary);
+  border-radius: var(--brand-radius-pill);
+  transition: width 500ms cubic-bezier(.3,0,0,1);
+}
+
+.event-card {
+  background-color: var(--brand-surface);
+  border: 1px solid var(--brand-line);
+  border-radius: var(--brand-radius-md);
+  padding: var(--brand-space-5);
+  box-shadow: var(--brand-shadow-1);
+}
+
+.event-meta {
+  display: flex;
+  align-items: center;
+  gap: var(--brand-space-2);
+  margin-bottom: var(--brand-space-3);
+  color: var(--brand-ink-3);
+  font-size: 13px;
+}
+
+.event-title {
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.25;
+  color: var(--brand-ink);
+  margin: 0 0 var(--brand-space-3) 0;
+}
+
+.event-desc {
+  font-size: 16px;
+  line-height: 1.7;
+  color: var(--brand-ink-2);
+  margin: 0 0 var(--brand-space-5) 0;
+}
+
+.choices {
+  display: flex;
+  flex-direction: column;
+  gap: var(--brand-space-3);
+}
+
+.choice-btn {
+  width: 100%;
+  text-align: left;
+  padding: var(--brand-space-4);
+  background-color: var(--brand-bg);
+  border: 1px solid var(--brand-line);
+  border-radius: var(--brand-radius-md);
+  color: var(--brand-ink);
+  font-size: 15px;
+  line-height: 1.5;
+  cursor: pointer;
+  transition: border-color 160ms cubic-bezier(.2,.8,.2,1), background-color 160ms cubic-bezier(.2,.8,.2,1), transform 160ms cubic-bezier(.2,.8,.2,1);
+}
+
+.choice-btn:hover:not(:disabled) {
+  border-color: var(--brand-primary);
+  background-color: rgba(74, 93, 35, 0.04);
+}
+
+.choice-btn:active:not(:disabled) {
+  transform: scale(0.995);
+}
+
+.choice-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.result-panel {
+  background-color: var(--brand-surface-2);
+  border: 1px solid var(--brand-line);
+  border-radius: var(--brand-radius-md);
+  padding: var(--brand-space-4);
+  margin-top: var(--brand-space-4);
+}
+
+.result-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--brand-ink);
+  margin: 0 0 var(--brand-space-3) 0;
+}
+
+.result-changes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--brand-space-2);
+  margin-bottom: var(--brand-space-4);
+}
+
+.change-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--brand-space-1);
+  padding: 4px 10px;
+  border-radius: var(--brand-radius-pill);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.change-tag.up {
+  background-color: rgba(45, 106, 79, 0.12);
+  color: var(--brand-state-success);
+}
+
+.change-tag.down {
+  background-color: rgba(155, 35, 53, 0.10);
+  color: var(--brand-state-error);
+}
+
+.result-desc {
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--brand-ink-2);
+  margin: 0 0 var(--brand-space-4) 0;
+}
+
+.primary-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--brand-space-2);
+  padding: 12px 24px;
+  background-color: var(--brand-primary);
+  color: var(--brand-primary-ink);
+  border: none;
+  border-radius: var(--brand-radius-md);
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 160ms cubic-bezier(.2,.8,.2,1), transform 160ms cubic-bezier(.2,.8,.2,1);
+}
+
+.primary-btn:hover {
+  background-color: var(--brand-primary-light);
+}
+
+.primary-btn:active {
+  transform: scale(0.98);
+}
+
+.primary-btn:disabled {
+  background-color: var(--brand-ink-3);
+  cursor: not-allowed;
+}
+
+.secondary-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--brand-space-2);
+  padding: 12px 24px;
+  background-color: transparent;
+  color: var(--brand-ink);
+  border: 1px solid var(--brand-line);
+  border-radius: var(--brand-radius-md);
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 160ms cubic-bezier(.2,.8,.2,1), background-color 160ms cubic-bezier(.2,.8,.2,1);
+}
+
+.secondary-btn:hover {
+  border-color: var(--brand-primary);
+  background-color: rgba(74, 93, 35, 0.04);
+}
+
+.btn-row {
+  display: flex;
+  gap: var(--brand-space-3);
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.score-card {
+  text-align: center;
+  padding: var(--brand-space-6) var(--brand-space-5);
+}
+
+.score-value {
+  font-size: clamp(48px, 10vw, 80px);
+  font-weight: 800;
+  line-height: 1;
+  color: var(--brand-primary);
+  font-variant-numeric: tabular-nums;
+  margin: 0 0 var(--brand-space-3) 0;
+}
+
+.score-rank {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--brand-ink);
+  margin: 0 0 var(--brand-space-3) 0;
+}
+
+.score-comment {
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--brand-ink-2);
+  margin: 0;
+}
+
+.badge-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--brand-space-2);
+  justify-content: center;
+  margin-top: var(--brand-space-4);
+}
+
+.badge {
+  padding: 6px 12px;
+  background-color: var(--brand-surface-2);
+  border: 1px solid var(--brand-line);
+  border-radius: var(--brand-radius-pill);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--brand-primary);
+}
+
+.footer-note {
+  text-align: center;
+  font-size: 12px;
+  color: var(--brand-ink-3);
+  padding: var(--brand-space-5) 0;
+}
+
+/* Utility replacements for Tailwind classes */
+.flex { display: flex; }
+.items-center { align-items: center; }
+.justify-between { justify-content: space-between; }
+.justify-center { justify-content: center; }
+.mb-2 { margin-bottom: var(--brand-space-2); }
+.mb-4 { margin-bottom: var(--brand-space-4); }
+.mt-5 { margin-top: var(--brand-space-5); }
+.mt-6 { margin-top: var(--brand-space-6); }
+.text-sm { font-size: 13px; }
+.text-lg { font-size: 18px; }
+.font-bold { font-weight: 700; }
+.font-semibold { font-weight: 600; }
+.text-foreground { color: var(--brand-foreground); }
+.text-primary { color: var(--brand-primary); }
+.w-4 { width: 16px; }
+.h-4 { height: 16px; }
+
+/* Attribute allocation screen */
+.allocate-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--brand-space-4);
+  margin: var(--brand-space-5) 0;
+}
+
+.allocate-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--brand-space-3);
+  padding: var(--brand-space-4);
+  background-color: var(--brand-bg);
+  border: 1px solid var(--brand-line);
+  border-radius: var(--brand-radius-md);
+}
+
+.allocate-info {
+  display: flex;
+  flex-direction: column;
+  gap: var(--brand-space-1);
+}
+
+.allocate-info strong {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--brand-ink);
+}
+
+.allocate-info span {
+  font-size: 13px;
+  color: var(--brand-ink-2);
+}
+
+.allocate-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--brand-space-2);
+}
+
+.allocate-btn {
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--brand-line);
+  border-radius: var(--brand-radius-md);
+  background-color: var(--brand-surface);
+  color: var(--brand-ink);
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 160ms cubic-bezier(.2,.8,.2,1), background-color 160ms cubic-bezier(.2,.8,.2,1);
+}
+
+.allocate-btn:hover:not(:disabled) {
+  border-color: var(--brand-primary);
+  background-color: rgba(74, 93, 35, 0.04);
+}
+
+.allocate-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.allocate-value {
+  min-width: 28px;
+  text-align: center;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--brand-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.allocate-remain {
+  text-align: center;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--brand-ink);
+  margin-bottom: var(--brand-space-4);
+}
+
+.allocate-remain span {
+  color: var(--brand-primary);
+}
+
+/* New game UI additions */
+.slot-tabs {
+  display: flex;
+  gap: var(--brand-space-2);
+  flex-wrap: wrap;
+  margin-top: var(--brand-space-3);
+}
+
+.slot-tab {
+  font-size: 12px;
+  padding: 4px 10px;
+  border-radius: var(--brand-radius-pill);
+  background-color: var(--brand-surface-2);
+  color: var(--brand-ink-3);
+  border: 1px solid var(--brand-line);
+}
+
+.slot-tab.active {
+  background-color: var(--brand-primary);
+  color: var(--brand-primary-ink);
+  border-color: var(--brand-primary);
+}
+
+.honor-bar {
+  height: 10px;
+  background: linear-gradient(90deg, var(--brand-state-error) 0%, var(--brand-state-warning) 50%, var(--brand-primary) 100%);
+  border-radius: var(--brand-radius-pill);
+  overflow: hidden;
+}
+
+.honor-fill {
+  height: 100%;
+  background-color: rgba(255,255,255,0.35);
+  width: 0%;
+  transition: width 500ms cubic-bezier(.3,0,0,1);
+}
+
+.honor-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: var(--brand-space-1);
+}
+
+.status-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--brand-space-2);
+  margin-top: var(--brand-space-3);
+}
+
+.status-badge {
+  font-size: 12px;
+  padding: 3px 10px;
+  border-radius: var(--brand-radius-pill);
+  background-color: var(--brand-surface-2);
+  color: var(--brand-ink-2);
+  border: 1px solid var(--brand-line);
+}
+
+.status-badge.warn {
+  background-color: rgba(155, 35, 53, 0.10);
+  color: var(--brand-state-error);
+  border-color: rgba(155, 35, 53, 0.20);
+}
+
+.status-badge.good {
+  background-color: rgba(45, 106, 79, 0.10);
+  color: var(--brand-state-success);
+  border-color: rgba(45, 106, 79, 0.20);
+}
+
+.collapsible-panel {
+  display: none;
+  margin-top: var(--brand-space-4);
+}
+
+.collapsible-panel.open {
+  display: block;
+}
+
+.toggle-btn {
+  font-size: 13px;
+  padding: 6px 12px;
+  border-radius: var(--brand-radius-md);
+  background-color: transparent;
+  border: 1px solid var(--brand-line);
+  color: var(--brand-ink-2);
+  cursor: pointer;
+  transition: border-color 160ms, color 160ms;
+}
+
+.toggle-btn:hover {
+  border-color: var(--brand-primary);
+  color: var(--brand-primary);
+}
+
+.question-card {
+  min-height: 220px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.question-text {
+  font-size: 19px;
+  font-weight: 600;
+  line-height: 1.5;
+  margin: 0 0 var(--brand-space-5) 0;
+}
+
+.question-choices {
+  display: flex;
+  flex-direction: column;
+  gap: var(--brand-space-3);
+}
+
+.growth-report {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--brand-space-5);
+}
+
+@media (min-width: 640px) {
+  .growth-report {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.report-section h3 {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0 0 var(--brand-space-3) 0;
+  color: var(--brand-ink);
+}
+
+.counter-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--brand-space-2);
+}
+
+.counter-item {
+  background-color: var(--brand-bg);
+  border: 1px solid var(--brand-line);
+  border-radius: var(--brand-radius-md);
+  padding: var(--brand-space-3);
+  font-size: 13px;
+}
+
+.counter-item strong {
+  display: block;
+  font-size: 15px;
+  color: var(--brand-primary);
+  margin-bottom: 2px;
+}
+
+.flag-outcome {
+  font-size: 20px;
+  font-weight: 700;
+  margin: var(--brand-space-4) 0;
+}
+
+.flag-success { color: var(--brand-state-success); }
+.flag-comeback { color: var(--brand-state-info); }
+.flag-narrow { color: var(--brand-ink-2); }
+
+.radar-wrap {
+  width: 100%;
+  max-width: 360px;
+  margin: 0 auto;
+}
+
+.prologue-step {
+  text-align: center;
+  padding: var(--brand-space-6) var(--brand-space-4);
+}
+
+.prologue-step h2 {
+  font-size: 24px;
+  margin: 0 0 var(--brand-space-4) 0;
+  color: var(--brand-primary);
+}
+
+.prologue-step p {
+  font-size: 17px;
+  line-height: 1.8;
+  color: var(--brand-ink-2);
+  margin: 0 0 var(--brand-space-5) 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.3.1/dist/index.global.js"></script>
+    <script src="https://unpkg.com/lucide@1.8.0/dist/umd/lucide.min.js"></script>
+    <style type="text/tailwindcss">
+  @theme inline {
+    --color-background: var(--brand-background);
+    --color-foreground: var(--brand-foreground);
+    --color-card: var(--brand-card);
+    --color-card-foreground: var(--brand-card-foreground);
+    --color-popover: var(--brand-popover);
+    --color-popover-foreground: var(--brand-popover-foreground);
+    --color-primary: var(--brand-primary);
+    --color-primary-foreground: var(--brand-primary-foreground);
+    --color-muted: var(--brand-muted);
+    --color-muted-foreground: var(--brand-muted-foreground);
+    --color-border: var(--brand-border);
+    --color-input: var(--brand-input);
+    --color-ring: var(--brand-ring);
+    --radius-sm: var(--brand-radius-sm);
+    --radius-md: var(--brand-radius-md);
+    --radius-lg: var(--brand-radius-lg);
+  }
+  @layer base {
+    body { background: var(--brand-background); color: var(--brand-foreground); }
+    td, th { @apply break-words; word-break: break-all; word-break: auto-phrase; }
+    th { @apply whitespace-nowrap; }
+  }
+    </style>
+    <style id="semantic-token-fallback">
+      .bg-background { background-color: var(--brand-background); }
+      .text-background { color: var(--brand-background); }
+      .border-background { border-color: var(--brand-background); }
+      .ring-background { --tw-ring-color: var(--brand-background); }
+      .bg-foreground { background-color: var(--brand-foreground); }
+      .text-foreground { color: var(--brand-foreground); }
+      .border-foreground { border-color: var(--brand-foreground); }
+      .ring-foreground { --tw-ring-color: var(--brand-foreground); }
+      .bg-card { background-color: var(--brand-card); }
+      .text-card { color: var(--brand-card); }
+      .border-card { border-color: var(--brand-card); }
+      .ring-card { --tw-ring-color: var(--brand-card); }
+      .bg-card-foreground { background-color: var(--brand-card-foreground); }
+      .text-card-foreground { color: var(--brand-card-foreground); }
+      .border-card-foreground { border-color: var(--brand-card-foreground); }
+      .ring-card-foreground { --tw-ring-color: var(--brand-card-foreground); }
+      .bg-popover { background-color: var(--brand-popover); }
+      .text-popover { color: var(--brand-popover); }
+      .border-popover { border-color: var(--brand-popover); }
+      .ring-popover { --tw-ring-color: var(--brand-popover); }
+      .bg-popover-foreground { background-color: var(--brand-popover-foreground); }
+      .text-popover-foreground { color: var(--brand-popover-foreground); }
+      .border-popover-foreground { border-color: var(--brand-popover-foreground); }
+      .ring-popover-foreground { --tw-ring-color: var(--brand-popover-foreground); }
+      .bg-primary { background-color: var(--brand-primary); }
+      .text-primary { color: var(--brand-primary); }
+      .border-primary { border-color: var(--brand-primary); }
+      .ring-primary { --tw-ring-color: var(--brand-primary); }
+      .bg-primary-foreground { background-color: var(--brand-primary-foreground); }
+      .text-primary-foreground { color: var(--brand-primary-foreground); }
+      .border-primary-foreground { border-color: var(--brand-primary-foreground); }
+      .ring-primary-foreground { --tw-ring-color: var(--brand-primary-foreground); }
+      .bg-muted { background-color: var(--brand-muted); }
+      .text-muted { color: var(--brand-muted); }
+      .border-muted { border-color: var(--brand-muted); }
+      .ring-muted { --tw-ring-color: var(--brand-muted); }
+      .bg-muted-foreground { background-color: var(--brand-muted-foreground); }
+      .text-muted-foreground { color: var(--brand-muted-foreground); }
+      .border-muted-foreground { border-color: var(--brand-muted-foreground); }
+      .ring-muted-foreground { --tw-ring-color: var(--brand-muted-foreground); }
+      .bg-border { background-color: var(--brand-border); }
+      .text-border { color: var(--brand-border); }
+      .border-border { border-color: var(--brand-border); }
+      .ring-border { --tw-ring-color: var(--brand-border); }
+      .bg-input { background-color: var(--brand-input); }
+      .text-input { color: var(--brand-input); }
+      .border-input { border-color: var(--brand-input); }
+      .ring-input { --tw-ring-color: var(--brand-input); }
+      .bg-ring { background-color: var(--brand-ring); }
+      .text-ring { color: var(--brand-ring); }
+      .border-ring { border-color: var(--brand-ring); }
+      .ring-ring { --tw-ring-color: var(--brand-ring); }
+    </style>
+    <style>
+      .no-scrollbar::-webkit-scrollbar { display: none; }
+      .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+      [data-icon] {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        -webkit-mask-size: contain;
+        mask-size: contain;
+        -webkit-mask-repeat: no-repeat;
+        mask-repeat: no-repeat;
+        -webkit-mask-position: center;
+        mask-position: center;
+        background-color: currentColor;
+      }
+    </style>
+</head>
+<body>
+  <div id="critical-layout">
+    <header class="app-header">
+      <h1 class="app-title">冲旗！</h1>
+      <p class="app-subtitle">上海交通大学军训文字模拟器</p>
+    </header>
+
+    <main class="game-container">
+      <!-- 开始界面 -->
+      <section id="start-screen" class="screen active">
+        <div class="card score-card">
+          <p class="intro-text">
+            你拖着行李箱走进东川路 800 号，即将开始为期两周的新生军训。
+            每天六个时段，从清晨起床到夜里回寝，你的选择会塑造体魄、纪律、意志、团结与学识，
+            也会影响体力、心情、人际关系和连队荣誉值。两周后，全连将一起“冲旗”。
+          </p>
+          <div class="btn-row">
+            <button id="btn-start" class="primary-btn" type="button">开始军训</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- 开局三问 -->
+      <section id="opening-screen" class="screen">
+        <div class="card question-card">
+          <p class="question-text" id="opening-question">问题</p>
+          <div class="question-choices" id="opening-choices"></div>
+        </div>
+      </section>
+
+      <!-- 第 0 天入校报到 -->
+      <section id="prologue-screen" class="screen">
+        <div class="card prologue-step">
+          <h2 id="prologue-title">第一幕</h2>
+          <p id="prologue-desc">描述</p>
+          <div class="btn-row mt-5">
+            <button id="btn-prologue-next" class="primary-btn" type="button">继续</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- 游戏主界面 -->
+      <section id="game-screen" class="screen">
+        <div class="card">
+          <div class="flex items-center justify-between mb-2">
+            <h2 class="text-lg font-bold text-foreground">当前状态</h2>
+            <span id="day-label" class="text-sm font-semibold text-primary">第 1 天 · 早晨起床</span>
+          </div>
+          <div class="progress-bar"><div id="progress-fill" class="progress-fill" style="width: 0%"></div></div>
+
+          <div class="honor-label">
+            <span>连队荣誉值 / 红旗值</span>
+            <span id="honor-value">300</span>
+          </div>
+          <div class="honor-bar"><div id="honor-fill" class="honor-fill" style="width: 30%"></div></div>
+
+          <div class="stats-grid mt-5">
+            <div class="stat-row">
+              <span class="stat-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 7h2"/><path d="M7 12h10"/><path d="M11 17h2"/><path d="M5 22v-5a3 3 0 0 1 3-3h8a3 3 0 0 1 3 3v5"/><path d="M5 2v3a3 3 0 0 0 3 3h8a3 3 0 0 0 3-3V2"/></svg>
+              </span>
+              <div class="stat-body">
+                <div class="stat-header"><span class="stat-label">体力</span><span id="val-stamina" class="stat-value">85</span></div>
+                <div class="stat-bar"><div id="bar-stamina" class="stat-fill" style="width: 85%"></div></div>
+              </div>
+            </div>
+            <div class="stat-row">
+              <span class="stat-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
+              </span>
+              <div class="stat-body">
+                <div class="stat-header"><span class="stat-label">心情</span><span id="val-mood" class="stat-value">70</span></div>
+                <div class="stat-bar"><div id="bar-mood" class="stat-fill" style="width: 70%"></div></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="status-badges" id="status-badges"></div>
+
+          <button id="btn-toggle-stats" class="toggle-btn mt-5" type="button">查看全部数值</button>
+          <div id="full-stats" class="collapsible-panel">
+            <div class="stats-grid mt-5">
+              <div class="stat-row">
+                <div class="stat-body">
+                  <div class="stat-header"><span class="stat-label">体魄</span><span id="val-fitness" class="stat-value">42</span></div>
+                  <div class="stat-bar"><div id="bar-fitness" class="stat-fill" style="width: 42%"></div></div>
+                </div>
+              </div>
+              <div class="stat-row">
+                <div class="stat-body">
+                  <div class="stat-header"><span class="stat-label">纪律</span><span id="val-discipline" class="stat-value">42</span></div>
+                  <div class="stat-bar"><div id="bar-discipline" class="stat-fill" style="width: 42%"></div></div>
+                </div>
+              </div>
+              <div class="stat-row">
+                <div class="stat-body">
+                  <div class="stat-header"><span class="stat-label">意志</span><span id="val-will" class="stat-value">42</span></div>
+                  <div class="stat-bar"><div id="bar-will" class="stat-fill" style="width: 42%"></div></div>
+                </div>
+              </div>
+              <div class="stat-row">
+                <div class="stat-body">
+                  <div class="stat-header"><span class="stat-label">团结</span><span id="val-unity" class="stat-value">42</span></div>
+                  <div class="stat-bar"><div id="bar-unity" class="stat-fill" style="width: 42%"></div></div>
+                </div>
+              </div>
+              <div class="stat-row" style="grid-column: 1 / -1;">
+                <div class="stat-body">
+                  <div class="stat-header"><span class="stat-label">学识</span><span id="val-knowledge" class="stat-value">42</span></div>
+                  <div class="stat-bar"><div id="bar-knowledge" class="stat-fill" style="width: 42%"></div></div>
+                </div>
+              </div>
+              <div class="stat-row">
+                <div class="stat-body">
+                  <div class="stat-header"><span class="stat-label">教官印象</span><span id="val-instructor" class="stat-value">50</span></div>
+                  <div class="stat-bar"><div id="bar-instructor" class="stat-fill" style="width: 50%"></div></div>
+                </div>
+              </div>
+              <div class="stat-row">
+                <div class="stat-body">
+                  <div class="stat-header"><span class="stat-label">辅导员好感</span><span id="val-counselor" class="stat-value">50</span></div>
+                  <div class="stat-bar"><div id="bar-counselor" class="stat-fill" style="width: 50%"></div></div>
+                </div>
+              </div>
+              <div class="stat-row">
+                <div class="stat-body">
+                  <div class="stat-header"><span class="stat-label">室友关系</span><span id="val-roommate" class="stat-value">55</span></div>
+                  <div class="stat-bar"><div id="bar-roommate" class="stat-fill" style="width: 55%"></div></div>
+                </div>
+              </div>
+              <div class="stat-row">
+                <div class="stat-body">
+                  <div class="stat-header"><span class="stat-label">同学人缘</span><span id="val-popularity" class="stat-value">50</span></div>
+                  <div class="stat-bar"><div id="bar-popularity" class="stat-fill" style="width: 50%"></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <article id="event-card" class="event-card">
+          <div class="event-meta">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            <span id="event-time">时间</span>
+            <span id="event-tag" class="badge" style="display:none"></span>
+          </div>
+          <h2 id="event-title" class="event-title">标题</h2>
+          <p id="event-desc">描述</p>
+          <div id="choices-container" class="choices"></div>
+          <div id="result-panel" class="result-panel" style="display: none;">
+            <h3 class="result-title">结果</h3>
+            <div id="result-changes" class="result-changes"></div>
+            <p id="result-desc" class="result-desc"></p>
+            <div id="result-extra" class="result-changes" style="margin-top: var(--brand-space-3);"></div>
+            <div class="btn-row">
+              <button id="btn-next-event" class="primary-btn" type="button">继续</button>
+            </div>
+          </div>
+        </article>
+      </section>
+
+      <!-- 结束界面 -->
+      <section id="end-screen" class="screen">
+        <div class="card score-card">
+          <h2 class="score-rank" id="end-title">成长报告</h2>
+          <p class="flag-outcome" id="flag-outcome">夺旗结果</p>
+          <p class="score-comment" id="end-comment">评语</p>
+          <div class="badge-list" id="title-list"></div>
+        </div>
+
+        <div class="card">
+          <div class="radar-wrap">
+            <canvas id="radar-chart"></canvas>
+          </div>
+        </div>
+
+        <div class="card growth-report">
+          <div class="report-section">
+            <h3>最终成长五维</h3>
+            <div class="stats-grid">
+              <div class="stat-row"><div class="stat-body"><div class="stat-header"><span class="stat-label">体魄</span><span id="end-fitness" class="stat-value">0</span></div><div class="stat-bar"><div id="end-bar-fitness" class="stat-fill" style="width: 0%"></div></div></div></div>
+              <div class="stat-row"><div class="stat-body"><div class="stat-header"><span class="stat-label">纪律</span><span id="end-discipline" class="stat-value">0</span></div><div class="stat-bar"><div id="end-bar-discipline" class="stat-fill" style="width: 0%"></div></div></div></div>
+              <div class="stat-row"><div class="stat-body"><div class="stat-header"><span class="stat-label">意志</span><span id="end-will" class="stat-value">0</span></div><div class="stat-bar"><div id="end-bar-will" class="stat-fill" style="width: 0%"></div></div></div></div>
+              <div class="stat-row"><div class="stat-body"><div class="stat-header"><span class="stat-label">团结</span><span id="end-unity" class="stat-value">0</span></div><div class="stat-bar"><div id="end-bar-unity" class="stat-fill" style="width: 0%"></div></div></div></div>
+              <div class="stat-row" style="grid-column: 1 / -1;"><div class="stat-body"><div class="stat-header"><span class="stat-label">学识</span><span id="end-knowledge" class="stat-value">0</span></div><div class="stat-bar"><div id="end-bar-knowledge" class="stat-fill" style="width: 0%"></div></div></div></div>
+            </div>
+          </div>
+          <div class="report-section">
+            <h3>隐藏计数与关键抉择</h3>
+            <div class="counter-grid" id="counter-grid"></div>
+          </div>
+          <div class="report-section" style="grid-column: 1 / -1;">
+            <h3>教官语录</h3>
+            <p id="instructor-quote" class="score-comment">"旗是连队的，也是每一个人的。"</p>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2 class="text-lg font-bold text-foreground mb-4">动态与关系最终值</h2>
+          <div class="stats-grid">
+            <div class="stat-row"><div class="stat-body"><div class="stat-header"><span class="stat-label">体力</span><span id="end-stamina" class="stat-value">0</span></div><div class="stat-bar"><div id="end-bar-stamina" class="stat-fill" style="width: 0%"></div></div></div></div>
+            <div class="stat-row"><div class="stat-body"><div class="stat-header"><span class="stat-label">心情</span><span id="end-mood" class="stat-value">0</span></div><div class="stat-bar"><div id="end-bar-mood" class="stat-fill" style="width: 0%"></div></div></div></div>
+            <div class="stat-row"><div class="stat-body"><div class="stat-header"><span class="stat-label">教官印象</span><span id="end-instructor" class="stat-value">0</span></div><div class="stat-bar"><div id="end-bar-instructor" class="stat-fill" style="width: 0%"></div></div></div></div>
+            <div class="stat-row"><div class="stat-body"><div class="stat-header"><span class="stat-label">辅导员好感</span><span id="end-counselor" class="stat-value">0</span></div><div class="stat-bar"><div id="end-bar-counselor" class="stat-fill" style="width: 0%"></div></div></div></div>
+            <div class="stat-row"><div class="stat-body"><div class="stat-header"><span class="stat-label">室友关系</span><span id="end-roommate" class="stat-value">0</span></div><div class="stat-bar"><div id="end-bar-roommate" class="stat-fill" style="width: 0%"></div></div></div></div>
+            <div class="stat-row"><div class="stat-body"><div class="stat-header"><span class="stat-label">同学人缘</span><span id="end-popularity" class="stat-value">0</span></div><div class="stat-bar"><div id="end-bar-popularity" class="stat-fill" style="width: 0%"></div></div></div></div>
+          </div>
+          <div class="btn-row mt-6">
+            <button id="btn-restart" class="primary-btn" type="button">再来一次</button>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer-note">
+      提示：不同选择会导向不同结局，试着走出多种军训人生。
+    </footer>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.js"></script>
+  <script>
+    (function() {
+      const STAT_LABELS = {
+        fitness: '体魄', discipline: '纪律', will: '意志', unity: '团结', knowledge: '学识',
+        stamina: '体力', mood: '心情',
+        instructor: '教官印象', counselor: '辅导员好感', roommate: '室友关系', popularity: '同学人缘',
+        honor: '连队荣誉值'
+      };
+      const GROWTH = ['fitness','discipline','will','unity','knowledge'];
+      const DYNAMIC = ['stamina','mood'];
+      const RELATION = ['instructor','counselor','roommate','popularity'];
+      const HIDDEN_LABELS = {
+        persist: '坚持计数', fish: '摸鱼计数', help: '助人计数', extra: '加练计数',
+        internalPerfect: '内务满分次数', nightChat: '夜聊次数', homesick: '想家次数',
+        shooting: '打靶成绩', marchDone: '拉练完成', keyFlag: '关键抉择'
+      };
+      const SLOT_NAMES = ['早晨起床','上午训练','午间休息','下午训练','晚间开会','夜里回寝'];
+      const SLOT_TIME = ['06:00–06:30','08:00–11:30','11:30–14:00','14:30–17:30','18:30–20:30','21:00–22:30'];
+
+      let state = null;
+
+      function clamp(v, min, max) { return Math.max(min, Math.min(max, v)); }
+
+      function showScreen(id) {
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+      }
+
+      const OPENING = [
+        {
+          q: '你更习惯早起还是熬夜？',
+          choices: [
+            { text: '早起，清晨效率最高。', effects: { fitness: 5 }, result: '早起的习惯让你更快适应军训节奏。' },
+            { text: '熬夜，晚上思路更清楚。', effects: { will: 5 }, result: '夜晚的坚持让你更能扛住训练压力。' }
+          ]
+        },
+        {
+          q: '你更擅长照顾人还是管住自己？',
+          choices: [
+            { text: '照顾人，看不得身边人难受。', effects: { unity: 5 }, result: '你的关心让周围人更快卸下防备。' },
+            { text: '管住自己，先把自己做好。', effects: { discipline: 5 }, result: '自律是你最稳定的底色。' }
+          ]
+        },
+        {
+          q: '你更喜欢运动还是看书？',
+          choices: [
+            { text: '运动，身体动起来才舒服。', effects: { fitness: 3, knowledge: 3 }, result: '体能底子不错，你对接下来的训练有底气。' },
+            { text: '看书，安静摄取知识。', effects: { discipline: 3, knowledge: 5 }, result: '你习惯观察与记录，讲座与校史会是你发光的地方。' }
+          ]
+        }
+      ];
+
+      const PROLOGUE = [
+        { title: '第一幕·校门', desc: '你拖着行李箱走进东川路 800 号。志愿者接过你的包，说"人工智能学院往这边"。梧桐树影在地上晃，你忽然意识到：这里将是十四天的新世界。', effects: {} },
+        { title: '第二幕·报到', desc: '注册、领物资：迷彩服、水壶、马扎。试穿迷彩服时尺码有点大，学姐笑说"宽松点好，训练时要出汗"。你把肩章捋平，第一次觉得自己像兵。', effects: { discipline: 1 } },
+        { title: '第三幕·分连', desc: '找到连队，教官站在旗杆下，辅导员递给你一瓶水。教官话不多，只说"三分钟后集合"。你下意识站直，教官的目光在你脸上停了一秒。', effects: { instructor: 2 } },
+        { title: '第四幕·宿舍', desc: '宿舍四人，上铺的兄弟已经铺好床。你们互相报了家乡，发现有一个同省。"晚上蚊帐记得塞好。"他说。你点点头，开始叠人生第一床"豆腐块"。', effects: { roommate: 3 } },
+        { title: '第五幕·第一夜', desc: '睡前小会，教官最后一句"早点睡"。你躺下，看见营房墙上挂着一面红旗，边角磨白。你想起白天他说的两个字：冲旗。十四天后，那面旗会在哪里？', effects: {}, setFlags: ['sawFlag'] }
+      ];
+
+      function makeChoice(text, effects, result, opts) {
+        return Object.assign({ text, effects: effects || {}, result: result || '' }, opts || {});
+      }
+
+      const FIXED_EVENTS = {
+        'F-01': {
+          id: 'F-01', title: '开训动员', tag: '固定',
+          timeLabel: 'D1 早晨 · 开训动员',
+          condition: s => s.day === 1 && s.slot === 0,
+          choices: [
+            makeChoice('认真听动员，记下"冲旗"两个字', { discipline: 3, will: 2, knowledge: 1 }, '团长提到校史时你多记了一句，那面旧连旗在风中猎猎作响。'),
+            makeChoice('和旁边同学交换眼神吐槽', { unity: 2, discipline: -2 }, '你们默契地撇撇嘴，但听到"冲旗"时都不自觉地抬头。'),
+            makeChoice('盯着旗子发呆，想象十四天后', { will: 3, mood: 2 }, '旗面旧、边角磨白，你想象它十四天后会挂在哪里。')
+          ]
+        },
+        'F-02': {
+          id: 'F-02', title: '破冰之夜', tag: '固定',
+          timeLabel: 'D1 晚间 · 破冰之夜',
+          condition: s => s.day === 1 && s.slot === 4,
+          choices: [
+            makeChoice('主动讲自己名字的故事', { unity: 5, popularity: 3, mood: -2 }, '笑声和掌声里，你第一次觉得"被记住"很重要。'),
+            makeChoice('认真听别人讲，记住每个人的名字', { unity: 4, popularity: 2 }, '你默默记下了三个名字，后面两周它们会派上用场。'),
+            makeChoice('缩在角落只报个名字', { unity: -2, mood: 2 }, '你享受安静，但散场时有人拍你肩："你叫啥来着？"')
+          ]
+        },
+        'F-03': {
+          id: 'F-03', title: '学唱军歌·晚间联谊唱歌', tag: '固定',
+          timeLabel: 'D2 晚间 · 学唱军歌',
+          condition: s => s.day === 2 && s.slot === 4,
+          choices: [
+            makeChoice('主动领唱/当指挥', { unity: 8, mood: 2, will: 3, instructor: 3, stamina: -3 }, '跑调被笑声接住，教官说"声音大就行"，全排跟你吼了起来。', { setFlags: ['songLeader'] }),
+            makeChoice('跟着大部队认真唱', { unity: 4, mood: 4, discipline: 2 }, '你不会唱，但会跟，集体的声音把你托住了。'),
+            makeChoice('躲在后排对口型', { mood: 2, unity: -3 }, '你保住了嗓子，却错过了第一次全连合唱。')
+          ]
+        },
+        'F-04': {
+          id: 'F-04', title: '想家的夜', tag: '重锤',
+          timeLabel: 'D2 夜里 · 想家的夜',
+          condition: s => s.day === 2 && s.slot === 5,
+          choices: [
+            makeChoice('递纸巾，说"我也刚哭过"', { unity: 8, roommate: 6, mood: 6 }, '室友愣了一下，然后笑了。这一晚，宿舍成了临时的家。'),
+            makeChoice('假装睡着，但心里也酸', { mood: -3, will: 2 }, '你听着啜泣声慢慢停，黑夜把心事吞掉一半。'),
+            makeChoice('讲个笑话把大家逗笑', { unity: 6, mood: 5 }, '笑话不好笑，但有人笑出了鼻涕泡。'),
+            makeChoice('下床给室友倒杯水', { unity: 7, roommate: 5, stamina: -3 }, '水递过去时，对方眼眶又红了，但这次是暖的。')
+          ]
+        },
+        'F-05': {
+          id: 'F-05', title: '安全教育讲座', tag: '固定',
+          timeLabel: 'D3 晚间 · 安全教育讲座',
+          condition: s => s.day === 3 && s.slot === 4,
+          choices: [
+            makeChoice('认真听，记下防诈要点', { knowledge: 6, discipline: 2 }, '你记了三条，后来发现身边真有人差点中招。'),
+            makeChoice('举手提问互动', { knowledge: 7, counselor: 4 }, '辅导员多看了你一眼，讲座后问你哪个学院的。'),
+            makeChoice('偷偷刷手机', { knowledge: -3, discipline: -6 }, '屏幕光被连长逮个正着，你成了反面教材。')
+          ]
+        },
+        'F-06': {
+          id: 'F-06', title: '紧急集合夜袭', tag: '固定',
+          timeLabel: 'D3 夜里 · 紧急集合',
+          condition: s => s.day === 3 && s.slot === 5,
+          choices: [
+            makeChoice('三分钟冲下楼，站得笔直', { discipline: 6, will: 3, stamina: -10, honor: 5 }, '黑暗中你只听见自己的心跳，教官掐表："三分整。"'),
+            makeChoice('手忙脚乱，最后一个到', { discipline: -5, stamina: -6, mood: -3 }, '有人穿反了裤子，你迟到了十秒，教官没骂，但目光很重。'),
+            makeChoice('边跑边帮室友拿帽子', { unity: 4, discipline: 3, stamina: -12, honor: 3 }, '你们狼狈地冲到楼下，室友冲你竖大拇指。')
+          ]
+        },
+        'F-07': {
+          id: 'F-07', title: '二十分钟的军姿', tag: '重锤',
+          timeLabel: 'D4 上午 · 二十分钟的军姿',
+          condition: s => s.day === 4 && s.slot === 1,
+          choices: [
+            makeChoice('咬牙再撑两分钟', { will: 20, fitness: 3, stamina: -8 }, '时间到的那一刻，你发现自己能撑过比想象更长的两分钟。教官拍拍你："好样的。"', { setFlags: ['stoodTwentyMin'] }),
+            makeChoice('报告教官申请休息', { discipline: -5, stamina: 8, will: -5 }, '树荫下你大口喘气，错过了那两分钟的重量。'),
+            makeChoice('心里数秒偷偷放松膝盖', { discipline: -8, will: -3 }, '你以为没人看见，但助教的眼神像雷达。')
+          ]
+        },
+        'F-08': {
+          id: 'F-08', title: '国防教育课·那一课', tag: '重锤',
+          timeLabel: 'D4 晚间 · 国防教育课',
+          condition: s => s.day === 4 && s.slot === 4,
+          choices: [
+            makeChoice('认真看完，眼眶发热', { knowledge: 8, will: 4, mood: -2 }, '你第一次意识到，和平不是理所当然的。'),
+            makeChoice('举手分享感受', { knowledge: 6, unity: 5, will: 3 }, '你说得磕磕绊绊，但掌声真诚。'),
+            makeChoice('觉得太沉重，走神玩手机', { knowledge: -4, discipline: -6 }, '连长没收了手机，说"这课比手机重"。')
+          ]
+        },
+        'F-09': {
+          id: 'F-09', title: '真人 CS 对抗', tag: '固定',
+          timeLabel: 'D5 上午 · 真人 CS',
+          condition: s => s.day === 5 && s.slot === 1,
+          choices: [
+            makeChoice('主动请缨当尖兵，打头阵', { fitness: 6, will: 4, instructor: 4, stamina: -15 }, '你"牺牲"时教官在身后点评："冲得猛，下次记得掩护。"', { setFlags: ['csAssault'] }),
+            makeChoice('提议迂回包抄战术', { knowledge: 5, unity: 5, popularity: 4 }, '你们班绕道成功，全连夸你会动脑。'),
+            makeChoice('当医疗兵/殿后掩护', { unity: 6, instructor: 3, stamina: -12 }, '你把"伤员"拖回来，衣服蹭了一身土。'),
+            makeChoice('缩在后面"保存实力"', { discipline: -6, fish: 1 }, '你保住了体力，但队友看你的眼神淡了。')
+          ]
+        },
+        'F-10': {
+          id: 'F-10', title: '拉歌比赛', tag: '固定',
+          timeLabel: 'D5 晚间 · 拉歌比赛',
+          condition: s => s.day === 5 && s.slot === 4,
+          choices: [
+            makeChoice('冲到最前排领喊', { unity: 8, honor: 10, stamina: -8, mood: 6 }, '"一二三四五，我们等得好辛苦！"你的嗓子哑了，但全连跟着你吼赢了。', { setFlags: ['songLeadCheer'] }),
+            makeChoice('在队伍里跟着吼', { unity: 5, honor: 5, mood: 4 }, '你没出彩，但也没掉链子，集体的声音里有你一份。'),
+            makeChoice('嗓子疼，小声划水', { honor: -3, mood: 2 }, '隔壁连的口号压过了你们，连长瞪了你一眼。')
+          ]
+        },
+        'F-11': {
+          id: 'F-11', title: '激光打靶', tag: '固定',
+          timeLabel: 'D6 上午 · 激光打靶',
+          condition: s => s.day === 6 && s.slot === 1,
+          choices: [
+            makeChoice('认真按教官口诀打，一枪一调整', { discipline: 4, knowledge: 4, shooting: 85 }, '你沉住气，成绩落在 80–95 之间。', { setFlags: ['shootingScore'] }),
+            makeChoice('凭感觉速射', { fitness: 3, shooting: 65 }, '成绩随机起伏，最好一枪 90，最差 50。'),
+            makeChoice('帮教官报靶、记成绩', { unity: 4, instructor: 5, shooting: 75 }, '你成绩中上，但赢得了教官的信任。')
+          ]
+        },
+        'F-12': {
+          id: 'F-12', title: '拉练动员与准备', tag: '固定',
+          timeLabel: 'D7 下午 · 拉练动员',
+          condition: s => s.day === 7 && s.slot === 3,
+          choices: [
+            makeChoice('仔细检查装备，灌满水壶', { discipline: 3, will: 2, stamina: 5 }, '你系紧鞋带，把恐惧也系成了结。'),
+            makeChoice('帮同学检查鞋带和背包', { unity: 5, popularity: 3 }, '有人感激地锤了你一下。'),
+            makeChoice('心里打鼓，盘算怎么"合理掉队"', { will: -3, fish: 1 }, '这个念头让你心虚了一下午。')
+          ]
+        },
+        'F-13': {
+          id: 'F-13', title: '拉练出发前讲话', tag: '固定',
+          timeLabel: 'D7 晚间 · 拉练出发前讲话',
+          condition: s => s.day === 7 && s.slot === 4,
+          choices: [
+            makeChoice('站得笔直，心里默念"冲旗"', { will: 4, discipline: 3 }, '夜色里，你连旗都看不清，但字在心里。'),
+            makeChoice('悄悄攥紧旁边同学的手', { unity: 4, mood: 3 }, '对方回握了一下，谁也没说话。'),
+            makeChoice('低头检查鞋带，掩饰紧张', { mood: -2, will: 2 }, '你检查了三遍鞋带，它还是那副样子。')
+          ]
+        },
+        'F-14': {
+          id: 'F-14', title: '夜间拉练·二十公里', tag: '重锤',
+          timeLabel: 'D7 夜里 · 夜间拉练',
+          condition: s => s.day === 7 && s.slot === 5 && !s.flags.marchChainDone,
+          training: true,
+          chain: [
+            {
+              title: '夜间拉练 · 第一幕·夜路',
+              desc: '路灯渐稀，队伍像一条黑色的河。有人开始哼歌，被教官一句"省点力气"打断。',
+              choices: [
+                makeChoice('跟上队伍节奏，调整呼吸', { will: 4, fitness: 3, stamina: -15 }, '呼吸渐渐平稳，脚步声成了唯一的节奏。'),
+                makeChoice('帮落在后面的同学背包', { unity: 5, stamina: -20, popularity: 4 }, '肩膀更沉了，但身后有人轻轻说了句"谢谢"。'),
+                makeChoice('低头赶路，一言不发', { will: 2, mood: -2 }, '夜色压得很低，你数着自己的脚步。')
+              ]
+            },
+            {
+              title: '夜间拉练 · 第二幕·极限',
+              desc: '脚底板发烫，肩膀被背带勒出印子。有人申请上收容车。教官走在队尾，脚步声很稳。',
+              choices: [
+                makeChoice('咬住牙，盯着前面人的后脑勺走', { will: 8, stamina: -15 }, '你把自己交给前面的背影，一步，再一步。'),
+                makeChoice('喊一句"兄弟们撑住"', { unity: 6, will: 3, stamina: -10 }, '声音沙哑，但队伍里有人应和。'),
+                makeChoice('举手上收容车', { will: -6, stamina: 20 }, '你坐上了车，望着队伍远去，心里空了一块。', { setFlags: ['marchQuit'] }),
+                makeChoice('心里默念"二十分钟都过来了"', { will: 10, stamina: -12 }, '那两分钟的重量，此刻成了你的燃料。')
+              ]
+            },
+            {
+              title: '夜间拉练 · 第三幕·星光',
+              desc: '凌晨，队伍休息五分钟。有人递水，有人靠在一起打盹。教官难得地坐在路边，看着天。',
+              choices: [
+                makeChoice('和教官聊两句', { instructor: 6, knowledge: 3, mood: 4 }, '他说起自己新兵时第一次拉练，语气轻得像星光。'),
+                makeChoice('把水分给没带够的同学', { unity: 6, stamina: -3 }, '水在几人手里传了一圈，最后回到你手里还剩半瓶。'),
+                makeChoice('一个人坐着看星星，想家', { mood: -2, will: 3, homesick: 1 }, '星星和家里的没什么不同，只是这里更安静。')
+              ]
+            },
+            {
+              title: '夜间拉练 · 第四幕·破晓',
+              desc: '天边泛起鱼肚白，营地轮廓出现在视野里。所有人忽然有了力气，队伍自发喊起了号子。',
+              choices: [
+                makeChoice('跟着吼，把最后力气喊出来', { will: 6, unity: 4, stamina: -8 }, '号子声里，你发现自己的腿还能迈。'),
+                makeChoice('搀着快撑不住的同学走完', { unity: 8, stamina: -12, popularity: 5 }, '你们互相架着，冲过了营地门口。'),
+                makeChoice('默不作声走完，在心里敬礼', { will: 6, mood: 3 }, '没人看见，但你觉得自己完成了一场仪式。')
+              ]
+            },
+            {
+              title: '夜间拉练 · 第五幕·归营',
+              desc: '回到营地，太阳升起。连长在门口等着："全连到齐。" 教官立正，向全连敬礼——所有人第一次回礼，没有口令。',
+              choices: [
+                makeChoice('回礼，眼眶发热', { will: 6, instructor: 4, mood: 4, marchDone: 1, honor: 20 }, '你的手举得不高，但教官看见了。'),
+                makeChoice('低头擦汗，假装没哭', { will: 4, mood: 2, marchDone: 1, honor: 20 }, '汗水和眼泪混在一起，没人分得清。'),
+                makeChoice('和室友相视一笑', { unity: 6, roommate: 4, marchDone: 1, honor: 20 }, '你们谁也没说话，但都知道：一起走过来了。')
+              ]
+            }
+          ],
+          next: (state, stage) => {
+            if (state.flags.marchQuit) return null;
+            if (stage >= 4) { state.flags.marchChainDone = true; return null; }
+            return stage + 1;
+          }
+        },
+        'F-15': {
+          id: 'F-15', title: '拉练总结会', tag: '固定',
+          timeLabel: 'D8 晚间 · 拉练总结会',
+          condition: s => s.day === 8 && s.slot === 4,
+          choices: [
+            makeChoice('主动分享拉练感受', { unity: 5, will: 3, instructor: 4 }, '你说得不多，但教官点头："我带的兵，最吵也最齐。"'),
+            makeChoice('认真听，把感想写进日记', { will: 3, knowledge: 2 }, '笔尖把星光和脚步声都留在了纸上。'),
+            makeChoice('走神想明天的训练', { discipline: -3 }, '连长咳嗽了一声，你赶紧收回思绪。')
+          ]
+        },
+        'F-16': {
+          id: 'F-16', title: '急救教育讲座', tag: '固定',
+          timeLabel: 'D9 晚间 · 急救教育讲座',
+          condition: s => s.day === 9 && s.slot === 4,
+          choices: [
+            makeChoice('上台跟着假人实操', { knowledge: 8, will: 3, popularity: 3, mood: -2 }, '你按错了两次位置，教官纠正后你终于找到节奏。', { setFlags: ['firstAidTrained'] }),
+            makeChoice('认真观摩，心里默记步骤', { knowledge: 5 }, '按压位置、频率 100–120 次/分，你反复默念。'),
+            makeChoice('觉得用不上，走神', { knowledge: -2 }, '讲座结束你才发现，旁边同学记了满满一页。')
+          ]
+        },
+        'F-17': {
+          id: 'F-17', title: '会操预演', tag: '固定',
+          timeLabel: 'D10 上午 · 会操预演',
+          condition: s => s.day === 10 && s.slot === 1,
+          choices: [
+            makeChoice('主动当排头兵', { discipline: 5, will: 4, instructor: 3, stamina: -8, honor: 15 }, '你走最前面，所有人的目光都压在你背上。', { setFlags: ['previewExcellent'] }),
+            makeChoice('反复默背口令和步伐', { discipline: 5, fitness: 3, honor: 8 }, '你没有当排头兵，但动作没出错。'),
+            makeChoice('紧张到手心出汗，深呼吸调整', { will: 3, mood: -2 }, '上场前你深吸三口气，总算没同手同脚。')
+          ]
+        },
+        'F-18': {
+          id: 'F-18', title: '强军故事会', tag: '重锤',
+          timeLabel: 'D10 晚间 · 强军故事会',
+          condition: s => s.day === 10 && s.slot === 4,
+          choices: [
+            makeChoice('认真听，记住最打动你的细节', { knowledge: 8, will: 3 }, '一个细节在你脑子里转了半宿：他也是个普通人的儿子。', { setFlags: ['strongArmyStory'] }),
+            makeChoice('举手分享自己知道的军史故事', { knowledge: 6, unity: 5 }, '你讲得不流利，但同学们听得很静。', { setFlags: ['strongArmyStory'] }),
+            makeChoice('低头沉默', { mood: -2, will: 2 }, '故事太重，你选择把它压在心底。', { setFlags: ['strongArmyStory'] })
+          ]
+        },
+        'F-19': {
+          id: 'F-19', title: '校史馆参观', tag: '重锤',
+          timeLabel: 'D11 下午 · 校史馆参观',
+          condition: s => s.day === 11 && s.slot === 3,
+          choices: [
+            makeChoice('跟着讲解认真听，逐件展品看过去', { knowledge: 10, discipline: 2 }, '你从南洋公学走到西迁，走到两弹一星。'),
+            makeChoice('问小班长"交大和国防的故事"', { knowledge: 9, instructor: 5 }, '小班长眼睛一亮，多讲了十分钟。'),
+            makeChoice('走马观花，只想快点结束', { knowledge: 2 }, '你漏掉了最重要的那一面墙。'),
+            makeChoice('在留言墙写下一句话', { mood: 4, knowledge: 3 }, '你写下"愿以所学，为国所用"，笔迹有点抖。', { setFlags: ['wallQuote'] })
+          ]
+        },
+        'F-20': {
+          id: 'F-20', title: '拔河·文体对抗', tag: '固定',
+          timeLabel: 'D12 下午 · 拔河·文体对抗',
+          condition: s => s.day === 12 && s.slot === 3,
+          choices: [
+            makeChoice('站到最前面当主力', { fitness: 6, unity: 5, stamina: -12 }, '绳子勒进手心，你听见自己吼出了从没听过的声音。'),
+            makeChoice('组织喊号子带节奏', { unity: 6, honor: 8 }, '"一二！拉！" 你的嗓子成了全连的节拍器。'),
+            makeChoice('在队伍里使劲但不吭声', { fitness: 3, unity: 3 }, '你出了力，但没人记得你的位置。'),
+            makeChoice('借口手疼躲到后勤', { discipline: -4, fish: 1 }, '你递水递毛巾，但绳子那头少了你的重量。')
+          ]
+        },
+        'F-21': {
+          id: 'F-21', title: '结营联欢', tag: '固定',
+          timeLabel: 'D13 晚间 · 结营联欢',
+          condition: s => s.day === 13 && s.slot === 4,
+          choices: [
+            makeChoice('上台表演节目', { unity: 8, will: 4, mood: 3, popularity: 4, stamina: -3 }, '你唱得一般，但台下手机灯光晃得像星海。'),
+            makeChoice('在台下起哄让教官唱歌', { unity: 5, mood: 6, instructor: -2 }, '教官跑调跑出了天际，全连笑到肚子疼。'),
+            makeChoice('举手机灯跟着唱', { unity: 4, mood: 5 }, '《强军战歌》响起时，你第一次觉得这首歌真好听。')
+          ]
+        },
+        'F-22': {
+          id: 'F-22', title: '互写留言', tag: '固定',
+          timeLabel: 'D13 夜里 · 互写留言',
+          condition: s => s.day === 13 && s.slot === 5,
+          choices: [
+            makeChoice('给每个室友认真写一段话', { unity: 8, mood: 5 }, '你写了删、删了写，最后留下一句"十四天，一起扛过来的"。'),
+            makeChoice('给教官写一张纸条', { instructor: 5, mood: 4 }, '你藏在枕头下，教官次日"什么也没说"，但收拾床铺时多停了两秒。'),
+            makeChoice('只给自己写一句"十四天，我扛过来了"', { will: 4, mood: 3 }, '你把这句话折成小块，塞进了迷彩服口袋。')
+          ]
+        },
+        'F-23': {
+          id: 'F-23', title: '汇报表演', tag: '固定',
+          timeLabel: 'D14 上午 · 汇报表演',
+          condition: s => s.day === 14 && s.slot === 1,
+          choices: [
+            makeChoice('走分列式时喊出最大声', { discipline: 5, will: 4, honor: 10 }, '你的嗓子在燃烧，但方阵的声音盖过了心跳。'),
+            makeChoice('余光看到教官在台下站得笔直', { will: 3, mood: 4 }, '你差点走神，但那一瞬间你明白了"最后一次"的意思。'),
+            makeChoice('紧张到同手同脚', { mood: 3, honor: -2 }, '教官事后说："你今天很\'活泼\'。" 你恨不得钻地缝。')
+          ]
+        },
+        'F-24': {
+          id: 'F-24', title: '结营仪式·送教官', tag: '重锤',
+          timeLabel: 'D14 下午 · 结营仪式',
+          condition: s => s.day === 14 && s.slot === 3,
+          choices: [
+            makeChoice('冲上去和教官拥抱/握手', { mood: 8, instructor: 6 }, '教官愣了一下，然后用力回握。'),
+            makeChoice('站得笔直，敬一个不标准的军礼', { will: 5, mood: 6 }, '教官回礼，没说话，但你看见他喉结动了一下。'),
+            makeChoice('躲在人群里，偷偷抹眼睛', { mood: -3, will: 3 }, '你没让任何人看见，但室友递来一张纸巾。')
+          ]
+        },
+        'F-25': {
+          id: 'F-25', title: '夺旗仪式·成长报告·结局', tag: '重锤',
+          timeLabel: 'D14 晚间 · 夺旗仪式',
+          condition: s => s.day === 14 && s.slot === 4,
+          choices: [
+            makeChoice('接过成长报告，看向那面旗', {}, '连长宣布结果，教官把旗转向全连。十四天的哨声会停，但你带走的成长不会消失。')
+          ]
+        }
+      };
+
+      const ROUTINE_EVENTS = [
+        {
+          slot: 0,
+          title: '早晨起床',
+          desc: '起床号刺破清晨，走廊里脚步声和抱怨声混在一起，教官在楼下掐着表。',
+          choices: s => {
+            const arr = [
+              makeChoice('第一个冲出宿舍，洗漱完毕楼下集合', { discipline: 3, fitness: 2, stamina: -3, instructor: 2 }, '教官看了一眼手表："这个速度，可以。"'),
+              makeChoice('帮室友叠被子、叫醒睡过头的室友', { unity: 4, stamina: -4 }, '室友迷迷糊糊说"谢谢"，你嘴角是扬的。'),
+              makeChoice('慢悠悠收拾自己，踩着点到', { mood: 3, discipline: -3 }, '你一路小跑，在最后十秒混进队伍。')
+            ];
+            if (s.dynamic.stamina < 30) arr.push(makeChoice('多睡五分钟', { stamina: 10, discipline: -8 }, '醒来时宿舍空了——楼下传来教官的哨声。'));
+            if (s.relation.roommate >= 60) arr.push(makeChoice('帮全宿舍带早饭', { unity: 3, roommate: 2, stamina: -3 }, '你提前十分钟到食堂，室友醒来时早饭已经在桌上了。'));
+            if (s.relation.instructor >= 60) arr.push(makeChoice('主动帮教官整理装备/水壶', { instructor: 3, discipline: 2 }, '教官把水壶递给你："谢谢你，记得自己的也别落下。"'));
+            return arr;
+          }
+        },
+        {
+          slot: 1,
+          title: '上午训练',
+          desc: '太阳刚升起来，塑胶跑道还带着潮气，教官的声音在操场上传得很远。',
+          training: true,
+          choices: s => {
+            const arr = [
+              makeChoice('认真训练，每一个口令做到位', { fitness: 5, discipline: 3, stamina: -20 }, '收操时教官点评，你的名字第一次被点到——是表扬。'),
+              makeChoice('主动向教官请教动作要领', { fitness: 6, instructor: 5, stamina: -18 }, '教官示范了一遍又一遍，最后拍拍你："悟性不错。"'),
+              makeChoice('帮旁边练不好的同学纠正动作', { unity: 5, instructor: 3, stamina: -15 }, '同学偷偷说"晚上请你喝饮料"，你说不用，心里很暖。'),
+              makeChoice('站后排偷偷放松，口号喊得响就行', { stamina: 5, discipline: -8, fish: 1 }, '教官的眼神扫过来，你赶紧站直。')
+            ];
+            if (s.dynamic.stamina < 30) arr.push(makeChoice('申请出列休息', { stamina: 15, discipline: -5 }, '你在树荫下坐着，第一次觉得"站着"也是一种资格。'));
+            if (s.growth.will >= 60) arr.push(makeChoice('主动申请当"示范兵"', { fitness: 4, will: 3, discipline: 3, instructor: 3, stamina: -10 }, '你站到第一排，动作成了全排的眼睛。'));
+            if (s.relation.popularity >= 60) arr.push(makeChoice('带着小队的同学加练口号', { unity: 4, discipline: 3, stamina: -10 }, '你们的口号声压过了隔壁排，教官朝这边点了点头。'));
+            return arr;
+          }
+        },
+        {
+          slot: 2,
+          title: '午间休息',
+          desc: '饭点一到，食堂像战场；午后的宿舍安静下来，只有风扇嗡嗡转。',
+          choices: s => {
+            const arr = [
+              makeChoice('冲进食堂干饭，吃饱喝足', { mood: 5, stamina: 10 }, '第一口饭下去，上午的疲惫好像被咽掉了。'),
+              makeChoice('回宿舍睡午觉', { stamina: 20, mood: 2 }, '十分钟就睡着了，梦里还在踢正步。'),
+              makeChoice('去小卖部+绕着校园逛一圈', { mood: 8, knowledge: 2, stamina: 5 }, '你发现湖边有只不怕人的猫，还记下了去教学楼的路。'),
+              makeChoice('给家里打个电话', { mood: 3, homesick: 1 }, '妈妈问"累不累"，你说"不累"，挂了电话鼻子有点酸。')
+            ];
+            if (s.relation.roommate >= 60) arr.push(makeChoice('给全宿舍带饮料', { unity: 3, roommate: 2, stamina: -2 }, '四人碰杯，塑料瓶装出了 champagne 的气势。'));
+            if (s.dynamic.mood < 30) arr.push(makeChoice('一个人在教学楼楼梯间坐一会儿', { mood: 6, will: 2 }, '阳光从窗户斜进来，你对自己说：再撑撑看。'));
+            return arr;
+          }
+        },
+        {
+          slot: 3,
+          title: '下午训练',
+          desc: '一天最热的时候，地面蒸腾着热气，教官说"下午是意志的时间"。',
+          training: true,
+          choices: s => {
+            const arr = [
+              makeChoice('认真训练', { fitness: 5, discipline: 3, stamina: -20 }, '汗水顺着下巴滴到地上，很快蒸发。'),
+              makeChoice('训练结束后主动加练半小时', { fitness: 8, will: 3, stamina: -28, extra: 1 }, '夕阳下操场只剩几个人，教官远远看着，没说话。'),
+              makeChoice('帮教官整理训练器材', { discipline: 3, instructor: 4, stamina: -10 }, '教官问你是哪里人，你们聊了两句家乡。'),
+              makeChoice('找个角落蹲着"研究蚂蚁"', { stamina: 5, discipline: -8, fish: 1 }, '蚂蚁搬家看了一半，教官的声音在你头顶响起。')
+            ];
+            if (s.growth.unity >= 60) arr.push(makeChoice('组织全班喊号子给会操提气', { unity: 5, discipline: 3, honor: 6, stamina: -10 }, '号子一起，全连的脚步像一个人。'));
+            if (s.growth.knowledge >= 50) arr.push(makeChoice('训练间隙给同学讲"为什么正步要砸地"', { knowledge: 3, popularity: 3, mood: 3 }, '你用高中物理糊弄了几句，居然有人当真了。'));
+            return arr;
+          }
+        },
+        {
+          slot: 4,
+          title: '晚间开会',
+          desc: '白天的训练结束，晚上是另一个战场——教室/礼堂里，连长说"今天讲点重要的"。',
+          choices: s => {
+            const arr = [
+              makeChoice('认真听讲、记笔记', { knowledge: 6, discipline: 2, stamina: -5 }, '你发现这些内容其实挺有用，偷偷记了两条。'),
+              makeChoice('和邻座小声聊天', { unity: 4, discipline: -3 }, '你们交换了家乡和高中，笑声压得很低。'),
+              makeChoice('偷偷玩手机', { mood: 4, discipline: -10, fish: 1 }, '屏幕的光照亮你的脸，你瞄了一眼讲台上的连长。'),
+              makeChoice('主动上台分享/回答问题', { unity: 5, will: 3, instructor: 4, mood: -2 }, '上台前腿有点抖，说完之后掌声让你耳朵发烫。')
+            ];
+            if (s.growth.knowledge >= 60) arr.push(makeChoice('讲座结束后找主讲人请教问题', { knowledge: 4, counselor: 3 }, '主讲人多讲了两分钟，辅导员在旁边微笑。'));
+            if (s.dynamic.mood < 30) arr.push(makeChoice('举手申请去外面透透气', { mood: 6, discipline: -4 }, '走廊的风吹在脸上，你觉得自己又能呼吸了。'));
+            return arr;
+          }
+        },
+        {
+          slot: 5,
+          title: '夜里回寝',
+          desc: '路灯把影子拉得很长，楼道里传来洗漱声和压低的笑声。这是一天里唯一属于自己的时间。',
+          choices: s => {
+            const arr = [
+              makeChoice('洗漱早睡', { stamina: 30, mood: 2 }, '躺下的那一刻，全身的骨头都在喊舒服。'),
+              makeChoice('和室友夜聊', { unity: 6, mood: 5, stamina: -5, nightChat: 1 }, '从高中聊到理想，有人说明天想放弃，你说再撑撑看。'),
+              makeChoice('补内务/偷偷加练', { discipline: 4, fitness: 3, stamina: -10, extra: 1 }, '你对着镜子练正步，室友在背后鼓掌，吓你一跳。'),
+              makeChoice('给家里打电话', { mood: 4, homesick: 1, stamina: -3 }, '电话那头的声音让你眼眶发热，你说"挺好的"。'),
+              makeChoice('躲在被窝玩手机', { mood: 5, stamina: -8, discipline: -3, fish: 1 }, '刷到凌晨，第二天闹钟响时你恨自己。')
+            ];
+            if (s.relation.roommate >= 60) arr.push(makeChoice('帮室友按摩/递水，聊到深夜', { unity: 4, roommate: 3, mood: 4, stamina: -8 }, '你们聊到谁打呼噜，然后上铺真的响了。'));
+            if (s.growth.will >= 55) arr.push(makeChoice('写军训日记', { will: 3, knowledge: 2, mood: 2 }, '纸上的字有点抖，但写完后轻了一点。'));
+            return arr;
+          }
+        }
+      ];
+
+      const RANDOM_EVENTS = [
+        {
+          id: 'R-01', slot: 1, title: '同学中暑晕倒', tag: '随机',
+          desc: '队伍里"咚"的一声，前排的同学脸色煞白倒了下去。',
+          weight: 1,
+          choices: s => [
+            makeChoice('和同学一起把他扶到阴凉处，喊教官', { unity: 6, instructor: 4, stamina: -8 }, '教官很快接手，你退到一边，心跳还很快。'),
+            ...(s.growth.knowledge >= 60 ? [makeChoice('立刻按急救知识处置', { unity: 10, instructor: 8, knowledge: 3, help: 1 }, '你解开衣领、抬高下肢，教官后来专门表扬了你。', { setFlags: ['firstAidHero', 'r01Saved'] })] : []),
+            makeChoice('站在原地发愣', { unity: -4, mood: -3 }, '你看着别人冲上去，腿像被钉住。')
+          ]
+        },
+        {
+          id: 'R-02', slot: 1, title: '军姿时鞋带开了', tag: '随机',
+          desc: '鞋带在脚尖晃，教官正朝这边走来。',
+          weight: 1,
+          choices: s => [
+            makeChoice('大声报告："报告！鞋带开了，请求处理！"', { discipline: 4, instructor: 3 }, '教官点头："出列。" 你系好，归队。'),
+            makeChoice('趁教官转身飞快系上', { discipline: -4 }, '你动作快，但助教的眼神扫了过来。'),
+            makeChoice('忍到休息，脚趾在鞋里使劲', { will: 4, stamina: -3 }, '脚趾麻了，但你没动。')
+          ]
+        },
+        {
+          id: 'R-03', slot: 1, title: '飞虫进眼', tag: '随机',
+          desc: '一只飞虫撞进眼睛，眼泪哗地流下来，教官正在讲动作要领。',
+          weight: 1,
+          choices: s => [
+            makeChoice('报告教官，出列处理', { discipline: 2, stamina: 5 }, '你揉出眼泪和虫子，归队时脸有点红。'),
+            makeChoice('硬撑着不眨眼', { will: 5, discipline: 2, stamina: -3 }, '眼泪流进嘴角，咸的。')
+          ]
+        },
+        {
+          id: 'R-04', slot: 1, title: '隔壁连队挑衅', tag: '随机',
+          desc: '隔壁连队训练时故意把口号喊得震天响，还往这边瞟。',
+          weight: 1,
+          choices: s => [
+            makeChoice('带着全排把口号喊回去', { unity: 5, honor: 8, stamina: -6 }, '两连声音撞在一起，你们喊赢了半个音。'),
+            makeChoice('小声对同学说"幼稚，但有点燃"', { unity: 2, mood: 3 }, '同学噗地笑出声，赶紧抿住嘴。'),
+            makeChoice('无动于衷', { honor: -3 }, '连长看向你这边，皱了皱眉。')
+          ]
+        },
+        {
+          id: 'R-05', slot: 0, title: '内务突击检查', tag: '随机',
+          desc: '早饭回来，教官站在门口，手里拎着一条"豆腐脑"——你的被子。',
+          weight: 1,
+          choices: s => [
+            makeChoice('当场重新叠，叠到教官点头', { discipline: 5, will: 2, stamina: -5 }, '你叠了四遍，教官终于说"像样了"。'),
+            makeChoice('诚恳认错："教官我练！"', { discipline: 3, instructor: 2 }, '教官把被子扔回床上："下午我再看。"'),
+            makeChoice('小声嘀咕"叠那么好干嘛"', { discipline: -6, mood: -3 }, '教官听见了，但没说话，只是记了一笔。')
+          ]
+        },
+        {
+          id: 'R-06', slot: 0, title: '闹钟没响', tag: '随机',
+          desc: '你睁眼时，宿舍已经空了——手机屏幕上 06:12，集合是 06:15。',
+          weight: 1,
+          choices: s => [
+            makeChoice('三分钟冲下去，边跑边系扣子', { discipline: -2, stamina: -6 }, '你压线赶到，教官看了你一眼，没点名。'),
+            makeChoice('慢悠悠想"反正迟了"', { discipline: -8, honor: -5 }, '你迟到了三分钟，全连看着你归队。'),
+            makeChoice('求助室友帮你打掩护', { unity: 3, discipline: -4 }, '室友替你答了到，但眼神里写着"欠我一顿"。')
+          ]
+        },
+        {
+          id: 'R-07', slot: 0, title: '教官查寝抓到没叠被', tag: '随机',
+          desc: '教官查寝，你的床像台风过境。',
+          weight: 1,
+          choices: s => {
+            const arr = [
+              makeChoice('承认"是我没叠好，马上叠"', { discipline: 2, instructor: 2 }, '教官把被子递给你："我等你叠好。"'),
+              makeChoice('嘴硬顶撞', { discipline: -10, instructor: -6, mood: -5 }, '教官没再说话，转身时你听见一声轻叹。')
+            ];
+            if (s.relation.roommate >= 60) {
+              arr.splice(1, 0, makeChoice('想赖给室友（室友帮你扛了）', { discipline: -5, unity: 2, roommate: 2 }, '室友帮你扛了："教官，是我没叫他。"你低下头，心里又暖又虚。'));
+            } else {
+              arr.splice(1, 0, makeChoice('想赖给室友', { discipline: -5 }, '室友没接话，教官的目光更冷了。'));
+            }
+            return arr;
+          }
+        },
+        {
+          id: 'R-08', slot: 2, title: '食堂抢饭摔跤', tag: '随机',
+          desc: '端着饭盘转身，脚下一滑——人和饭一起飞了出去。',
+          weight: 1,
+          choices: s => [
+            makeChoice('爬起来自己收拾，苦笑一声"没事"', { will: 3, mood: -3 }, '周围静了一秒，然后有人递来纸巾。'),
+            makeChoice('室友冲过来扶你，重新打饭', { unity: 4, mood: 4 }, '你们重新排队，室友笑你"摔出了风采"。'),
+            makeChoice('尴尬到想找个地缝', { mood: -4, popularity: -2 }, '你低着头，没敢看周围。')
+          ]
+        },
+        {
+          id: 'R-09', slot: 2, title: '饭里的惊喜', tag: '随机',
+          desc: '今天的菜里有一个加餐鸡腿/一份"黑暗料理"。',
+          weight: 1,
+          choices: s => [
+            makeChoice('把鸡腿分给没抢到饭的室友', { unity: 4, roommate: 3 }, '室友说"你亲哥/亲姐"，你笑得差点噎住。'),
+            makeChoice('自己独享，真香', { mood: 4 }, '你啃得满嘴油，没空说话。'),
+            makeChoice('吐槽黑暗料理，和同学笑成一团', { unity: 3, mood: 3 }, '你们给这道菜起了十个外号。')
+          ]
+        },
+        {
+          id: 'R-10', slot: 2, title: '收到家人微信', tag: '随机',
+          desc: '手机震动，妈妈发来一张家里晚饭的照片："吃了吗？"',
+          weight: 1,
+          choices: s => [
+            makeChoice('回一句"吃了，挺好的"，附一张食堂照片', { mood: 5, homesick: 1 }, '妈妈回了个笑脸，你盯着屏幕看了很久。'),
+            makeChoice('打电话回去聊十分钟', { mood: 6, homesick: 1, stamina: -3 }, '电话挂断后，你多站了一会儿才回宿舍。'),
+            makeChoice('关掉手机，训练要紧', { will: 3, mood: -2 }, '你把手机塞进口袋，但心里还想着那张照片。')
+          ]
+        },
+        {
+          id: 'R-11', slot: 4, title: '傍晚突然想家', tag: '随机',
+          desc: '晚霞烧红了半边天，广播里放着一首慢歌。你忽然很想家，想家里的饭桌。',
+          weight: 1,
+          choices: s => [
+            makeChoice('给家里打个电话', { mood: 6, homesick: 1, stamina: -3 }, '电话那头的声音让你眼眶发热。'),
+            makeChoice('找室友聊聊天', { unity: 4, mood: 5 }, '你们坐在台阶上，没人提"家"，但都知道。'),
+            makeChoice('一个人坐到操场边发呆', { mood: -4, will: 2 }, '天慢慢黑下来，你数了七架飞机。'),
+            makeChoice('去写军训日记，把想家写下来', { will: 3, mood: 3, knowledge: 2 }, '纸上的字有点歪，但写完后轻了一点。')
+          ]
+        },
+        {
+          id: 'R-12', slot: 5, title: '紧急集合（夜间突袭）', tag: '随机',
+          desc: '深夜，哨声刺破寂静——"紧急集合！三分钟！"',
+          weight: 0.6,
+          choices: s => [
+            makeChoice('三分钟冲下楼', { discipline: 6, will: 3, stamina: -10 }, s.day > 3 ? '教官看了你一眼："老熟人，动作还挺快。"' : '黑暗中你只听见自己的心跳，教官掐表："三分整。"'),
+            makeChoice('手忙脚乱，鞋子穿反', { discipline: -4, stamina: -6, mood: -3 }, '有人笑出了声，教官的目光扫过来，全场安静。'),
+            makeChoice('帮室友拿装备一起冲', { unity: 4, discipline: 3, stamina: -12 }, '你们狼狈地冲到楼下，室友冲你竖大拇指。')
+          ]
+        },
+        {
+          id: 'R-13', slot: 3, title: '暴雨突至·抢收器材', tag: '随机',
+          desc: '豆大的雨点砸下来，教官一声令下"抢收器材！"',
+          weight: 1,
+          choices: s => [
+            makeChoice('冲进雨里搬器材，浑身湿透', { unity: 5, discipline: 3, instructor: 4, stamina: -8 }, '雨水顺着下巴流，你把器材扛进了仓库。'),
+            makeChoice('就近躲雨，等雨小', { discipline: -4, mood: 2 }, '你看着别人忙，心里有点虚。'),
+            makeChoice('边搬边喊"兄弟们动作快"', { unity: 6, honor: 5, stamina: -10 }, '雨声里，你的声音成了号令。')
+          ]
+        },
+        {
+          id: 'R-14', slot: 3, title: '同学训练受伤', tag: '随机',
+          desc: '队列训练时旁边的同学崴了脚，蹲在地上。',
+          weight: 1,
+          choices: s => [
+            makeChoice('扶他去医务室', { unity: 6, popularity: 4, stamina: -6 }, '他一半重量压在你肩上，你俩像企鹅一样挪到了医务室。'),
+            ...(s.growth.knowledge >= 60 ? [makeChoice('就地检查+冰敷处理', { unity: 8, knowledge: 2, instructor: 5, help: 1 }, '你按急救课教的步骤处理，教官后来表扬了你。', { setFlags: ['firstAidHero', 'r14Saved'] })] : []),
+            makeChoice('喊教官来处理，自己回队', { discipline: 3 }, '你做了正确但疏离的选择。'),
+            makeChoice('假装没看见', { unity: -5 }, '你继续训练，但余光一直瞟着他。')
+          ]
+        },
+        {
+          id: 'R-15', slot: 3, title: '教官生日惊喜预谋', tag: '随机',
+          desc: '同学打听到今天是教官生日，大家挤眉弄眼："晚上搞他一下？"',
+          weight: 0.8,
+          choices: s => [
+            makeChoice('积极参与，负责买蛋糕/写卡片', { unity: 6, mood: 5, stamina: -6, instructor: 4 }, '晚上教官被拉进教室，蛋糕上的蜡烛晃得他眼睛发亮。'),
+            makeChoice('跟着起哄，出个主意', { unity: 4, mood: 4 }, '你提议让教官许愿，他说："希望你们平安。"'),
+            makeChoice('觉得麻烦，不掺和', { unity: -2 }, '你在角落里看着，没上去，但也没走开。')
+          ]
+        },
+        {
+          id: 'R-16', slot: 4, title: '玩手机被抓', tag: '随机',
+          desc: '你正低头刷得入迷，一只手出现在屏幕上方——教官把手机"没收"了（暂时）。',
+          weight: 1,
+          choices: s => [
+            makeChoice('老实认错，主动交手机', { discipline: 2, instructor: -2 }, '教官看了你一眼："态度还行，下不为例。"'),
+            makeChoice('狡辩"我在查资料"', { discipline: -8, instructor: -6 }, '教官没说话，只是把手机放进了口袋。'),
+            makeChoice('课后找教官认错，说明原因', { discipline: 3, instructor: 1, will: 2 }, '教官听完，把手机还给你："下次先报告。"')
+          ]
+        },
+        {
+          id: 'R-17', slot: 4, title: '教官讲当兵的故事', tag: '随机',
+          desc: '夜聊时有人问教官"你为什么当兵"，他沉默了一会儿，讲起自己新兵连的事。',
+          weight: 1,
+          choices: s => [
+            makeChoice('认真听，问一个细节问题', { instructor: 4, knowledge: 3 }, '教官回答得很慢，像从很远的地方把记忆拉回来。'),
+            makeChoice('不插话，把故事记在心里', { knowledge: 3, will: 2 }, '你记住了他的一句话："当兵就是把自己变小，把连旗变大。"'),
+            makeChoice('讲个笑话活跃气氛', { unity: 3, mood: 4, instructor: -1 }, '教官"记仇"地瞪了你一眼，但嘴角在抖。')
+          ]
+        },
+        {
+          id: 'R-18', slot: 4, title: '停电·烛光拉歌', tag: '随机',
+          desc: '突然停电，全场一静，不知谁起了个头，歌声响起来，越来越齐。',
+          weight: 1,
+          choices: s => [
+            makeChoice('跟着唱，越唱越大声', { unity: 6, mood: 6, honor: 5 }, '黑暗里，声音是最亮的光。'),
+            makeChoice('举起手机灯当荧光棒', { unity: 4, mood: 5 }, '一片星海在礼堂里晃。'),
+            makeChoice('摸黑溜回宿舍', { discipline: -6 }, '你被教官逮住，成了唯一没唱歌的人。')
+          ]
+        },
+        {
+          id: 'R-19', slot: 5, title: '室友呼噜声', tag: '随机',
+          desc: '熄灯半小时，上铺的呼噜声像一台拖拉机。',
+          weight: 1,
+          choices: s => [
+            makeChoice('戴上耳塞，翻个身', { stamina: 5 }, '你学会了和拖拉机共处。'),
+            makeChoice('轻轻推醒他："你打呼噜了。"', { roommate: -2, mood: 2 }, '他一脸懵："我？" 全宿舍憋笑。'),
+            makeChoice('忍，把呼噜声当白噪音', { will: 3, stamina: -5 }, '你数了三千只羊，拖拉机终于停了。')
+          ]
+        },
+        {
+          id: 'R-20', slot: 5, title: '蚊子夜战', tag: '随机',
+          desc: '一只蚊子在你耳边开演唱会，开灯一看，蚊帐里进了"敌机"。',
+          weight: 1,
+          choices: s => [
+            makeChoice('开灯围剿，室友集体参战', { unity: 3, mood: 4, stamina: -5 }, '三分钟后，蚊子阵亡，你们也精神了。'),
+            makeChoice('蒙头睡觉，不管了', { stamina: -3, mood: -2 }, '蚊子在你耳边开了一晚上演唱会。'),
+            makeChoice('用军训的战术动作拍蚊子', { mood: 5, discipline: -1 }, '你喊了声"杀"，室友以为紧急集合。')
+          ]
+        }
+      ];
+
+      function getRoutineEvent(slot) {
+        const tmpl = ROUTINE_EVENTS[slot];
+        return {
+          title: tmpl.title,
+          desc: tmpl.desc,
+          training: tmpl.training,
+          choices: typeof tmpl.choices === 'function' ? tmpl.choices(state) : tmpl.choices
+        };
+      }
+
+      function pickRandomEvent(slot) {
+        // F-04 后降低想家事件概率；同一事件避免连续出现
+        let chance = 0.35;
+        if (slot === 4 && state.flags['F-04']) chance = 0.22;
+        if (Math.random() > chance) return null;
+        let pool = RANDOM_EVENTS.filter(r => r.slot === slot && state.lastRandom[r.id] !== state.day);
+        if (state.lastRandomId && pool.length > 1) {
+          pool = pool.filter(r => r.id !== state.lastRandomId);
+        }
+        if (pool.length === 0) return null;
+        const total = pool.reduce((a, b) => a + b.weight, 0);
+        let roll = Math.random() * total;
+        for (const ev of pool) {
+          roll -= ev.weight;
+          if (roll <= 0) {
+            state.lastRandom[ev.id] = state.day;
+            state.lastRandomId = ev.id;
+            return {
+              id: ev.id,
+              title: ev.title,
+              desc: ev.desc,
+              tag: ev.tag,
+              choices: typeof ev.choices === 'function' ? ev.choices(state) : ev.choices
+            };
+          }
+        }
+        return null;
+      }
+
+      function getCurrentEvent() {
+        if (state.chain) {
+          const ev = FIXED_EVENTS[state.chain.id];
+          if (ev && ev.chain && ev.chain[state.chain.stage]) {
+            const stageEv = ev.chain[state.chain.stage];
+            return {
+              id: ev.id,
+              title: stageEv.title,
+              desc: stageEv.desc,
+              training: ev.training,
+              choices: stageEv.choices,
+              tag: ev.tag,
+              timeLabel: ev.timeLabel + '（' + (state.chain.stage + 1) + '/' + ev.chain.length + '）'
+            };
+          }
+        }
+        for (const id in FIXED_EVENTS) {
+          const ev = FIXED_EVENTS[id];
+          if (ev.condition && ev.condition(state)) {
+            if (ev.chain && ev.chain.length > 0) {
+              state.chain = { id, stage: 0 };
+              const stageEv = ev.chain[0];
+              return {
+                id: ev.id,
+                title: stageEv.title,
+                desc: stageEv.desc,
+                training: ev.training,
+                choices: stageEv.choices,
+                tag: ev.tag,
+                timeLabel: ev.timeLabel + '（1/' + ev.chain.length + '）'
+              };
+            }
+            return {
+              id: ev.id,
+              title: ev.title,
+              desc: ev.desc,
+              training: ev.training,
+              choices: typeof ev.choices === 'function' ? ev.choices(state) : ev.choices,
+              tag: ev.tag,
+              timeLabel: ev.timeLabel
+            };
+          }
+        }
+        const rand = pickRandomEvent(state.slot);
+        if (rand) return rand;
+        return getRoutineEvent(state.slot);
+      }
+
+      function preTurnLogic() {
+        // D8 recover from march (拉练后休整，全体体力强制回满)
+        if (state.day === 8 && state.slot === 0) {
+          state.dynamic.stamina = 100;
+        }
+        // hidden H-01 护旗手
+        if (state.day >= 11 && state.day <= 13 && state.slot === 5 && state.relation.instructor >= 60 && state.honor >= 450 && !state.flags.flagGuardOffered) {
+          state.flags.flagGuardOffered = true;
+          return {
+            id: 'H-01',
+            title: '隐藏事件 · 护旗手',
+            desc: '晚上，教官单独叫住你："结营那天，你想擎旗吗？" 他教你擎旗的姿势，旗杆比你想象的沉。',
+            tag: '隐藏',
+            choices: [
+              makeChoice('认真练习擎旗', { will: 6, discipline: 5, instructor: 5 }, '你练到手臂发抖，但旗杆终于不晃了。', { setFlags: ['flagGuard'] }),
+              makeChoice('感谢教官，但怕自己撑不住', { instructor: 2, mood: -2 }, '教官拍拍你："撑不住再说，先试试。"')
+            ]
+          };
+        }
+        // hidden H-02 老兵的故事
+        if (state.day === 10 && state.slot === 5 && state.growth.knowledge >= 70 && state.flags.strongArmyStory && !state.flags.veteranStory) {
+          state.flags.veteranStory = true;
+          return {
+            id: 'H-02',
+            title: '隐藏事件 · 老兵的故事',
+            desc: '教官单独叫住你，讲他爷爷——老红军的故事。校史与军史在此交汇。',
+            tag: '隐藏',
+            choices: [
+              makeChoice('认真听完，问一个细节', { knowledge: 8, will: 4, mood: 3 }, '他说："我爷爷没留下照片，只留下一面小旗。"'),
+              makeChoice('默默记下，不打扰', { knowledge: 6, will: 3 }, '月光下，你们谁也没说话。')
+            ]
+          };
+        }
+        // hidden H-03 深夜加练的月光
+        if (state.day >= 9 && state.day <= 12 && state.slot === 5 && state.dynamic.stamina >= 80 && state.hidden.extra >= 3 && !state.flags.moonlightDrill) {
+          state.flags.moonlightDrill = true;
+          return {
+            id: 'H-03',
+            title: '隐藏事件 · 深夜加练的月光',
+            desc: '你独自加练，发现教官也在练。两人月光下相视一笑，谁也不说话。',
+            tag: '隐藏',
+            choices: [
+              makeChoice('继续练，和他并肩', { fitness: 5, will: 4, instructor: 4, stamina: -10 }, '月光把你们的影子拉得很长。')
+            ]
+          };
+        }
+        // hidden H-04 急救闪光时刻
+        if (state.slot === 5 && state.growth.knowledge >= 60 && (state.flags.r01Saved || state.flags.r14Saved) && !state.flags.h04Triggered) {
+          state.flags.h04Triggered = true;
+          return {
+            id: 'H-04',
+            title: '隐藏事件 · 急救闪光时刻',
+            desc: '晚点评时，教官专门提到今天的事："这就是军训的意义之一。"',
+            tag: '隐藏',
+            choices: [
+              makeChoice('站得更直一点', { unity: 10, instructor: 8, knowledge: 3 }, '全连的目光投过来，你第一次觉得"被看见"这么重。', { setFlags: ['firstAidHero'] })
+            ]
+          };
+        }
+        return null;
+      }
+
+      function logChange(label, diff, kind) {
+        state.history.push({ day: state.day, slot: state.slot, label, diff, kind });
+      }
+
+      function applyEffects(raw, ctx) {
+        ctx = ctx || {};
+        const changes = [];
+        const moodLow = state.dynamic.mood < 30;
+        const moodHigh = state.dynamic.mood >= 70;
+        const trainingPenalty = ctx.training && state.dynamic.stamina < 30;
+        for (const key in raw) {
+          let delta = raw[key];
+          if (key === 'honor') {
+            let d = delta;
+            if (d > 0 && moodHigh) d = Math.round(d * 1.2);
+            if (d > 0 && moodLow) d = Math.round(d * 0.8);
+            const before = state.honor;
+            state.honor = clamp(state.honor + d, 0, 1000);
+            const actual = state.honor - before;
+            if (actual !== 0) {
+              state.todayHonor += actual;
+              changes.push({ key, diff: actual, label: STAT_LABELS.honor });
+            }
+            continue;
+          }
+          if (HIDDEN_LABELS[key]) {
+            state.hidden[key] = Math.max(0, state.hidden[key] + delta);
+            continue;
+          }
+          const growthIdx = GROWTH.indexOf(key);
+          const relIdx = RELATION.indexOf(key);
+          const dynIdx = DYNAMIC.indexOf(key);
+          if (growthIdx < 0 && relIdx < 0 && dynIdx < 0) continue;
+          let d = delta;
+          if (d > 0) {
+            if (moodHigh) d = Math.round(d * 1.2);
+            if (moodLow) d = Math.round(d * 0.8);
+          }
+          if (trainingPenalty && (key === 'fitness' || key === 'discipline') && d > 0) {
+            d = Math.round(d * 0.5);
+          }
+          if (growthIdx >= 0) {
+            const before = state.growth[key];
+            state.growth[key] = clamp(state.growth[key] + d, 15, 100);
+            const actual = state.growth[key] - before;
+            if (actual !== 0) changes.push({ key, diff: actual, label: STAT_LABELS[key] });
+          } else if (relIdx >= 0) {
+            const before = state.relation[key];
+            state.relation[key] = clamp(state.relation[key] + d, 10, 100);
+            const actual = state.relation[key] - before;
+            if (actual !== 0) changes.push({ key, diff: actual, label: STAT_LABELS[key] });
+          } else if (dynIdx >= 0) {
+            const before = state.dynamic[key];
+            state.dynamic[key] = clamp(state.dynamic[key] + d, 0, 100);
+            const actual = state.dynamic[key] - before;
+            if (actual !== 0) changes.push({ key, diff: actual, label: STAT_LABELS[key] });
+          }
+        }
+        return changes;
+      }
+
+      function buildChoiceBtn(choice, idx) {
+        const btn = document.createElement('button');
+        btn.className = 'choice-btn';
+        btn.type = 'button';
+        let txt = choice.text;
+        if (choice.chance !== undefined) txt += '（成功率 ' + Math.round(choice.chance * 100) + '%）';
+        btn.textContent = txt;
+        btn.disabled = choice.disabled;
+        if (choice.disabled) btn.title = choice.disabledReason || '当前条件不满足';
+        btn.addEventListener('click', () => choose(idx));
+        return btn;
+      }
+
+      function renderCurrentEvent() {
+        const pre = preTurnLogic();
+        const ev = pre || getCurrentEvent();
+        state.currentEvent = ev;
+        document.getElementById('day-label').textContent = '第 ' + state.day + ' 天 · ' + SLOT_NAMES[state.slot] + ' · ' + SLOT_TIME[state.slot];
+        document.getElementById('progress-fill').style.width = (((state.day - 1) * 6 + state.slot) / (14 * 6 - 1) * 100) + '%';
+        document.getElementById('event-time').textContent = ev.timeLabel || (SLOT_NAMES[state.slot] + ' · ' + SLOT_TIME[state.slot]);
+        document.getElementById('event-title').textContent = ev.title;
+        document.getElementById('event-desc').textContent = ev.desc;
+        const tag = document.getElementById('event-tag');
+        if (ev.tag) { tag.style.display = 'inline-flex'; tag.textContent = ev.tag; }
+        else { tag.style.display = 'none'; }
+        const cont = document.getElementById('choices-container');
+        cont.innerHTML = '';
+        ev.choices.forEach((c, i) => cont.appendChild(buildChoiceBtn(c, i)));
+        document.getElementById('result-panel').style.display = 'none';
+        updateStats();
+      }
+
+      function choose(idx) {
+        const ev = state.currentEvent || getCurrentEvent();
+        const choice = ev.choices[idx];
+        let resultText = choice.result;
+        let effects = choice.effects || {};
+        let flags = choice.setFlags ? choice.setFlags.slice() : [];
+        if (choice.chance !== undefined) {
+          const roll = Math.random();
+          const out = roll < choice.chance ? choice.success : choice.failure;
+          effects = out.effects || {};
+          resultText = out.result || resultText;
+          if (out.setFlags) flags = flags.concat(out.setFlags);
+        }
+        flags.forEach(f => { state.flags[f] = true; });
+        const ctx = { training: ev.training };
+        const changes = applyEffects(effects, ctx);
+        // collapse check
+        if (state.dynamic.stamina <= 0) {
+          state.dynamic.stamina = 0;
+          state.dynamic.mood = clamp(state.dynamic.mood - 10, 0, 100);
+          state.relation.instructor = clamp(state.relation.instructor - 5, 10, 100);
+          state.honor = clamp(state.honor - 5, 0, 1000);
+          changes.push({ key: 'mood', diff: -10, label: STAT_LABELS.mood });
+          changes.push({ key: 'instructor', diff: -5, label: STAT_LABELS.instructor });
+          changes.push({ key: 'honor', diff: -5, label: STAT_LABELS.honor });
+          state.flags.collapseToday = true;
+          state.slot = 5; // skip remaining day
+          resultText += ' 你因体力透支被送医务室，今天剩余训练取消。';
+        }
+        document.querySelectorAll('.choice-btn').forEach(b => b.disabled = true);
+        renderChanges(changes);
+        document.getElementById('result-desc').textContent = resultText;
+        // threshold messages
+        const extra = document.getElementById('result-extra');
+        extra.innerHTML = '';
+        const thresholdText = checkHonorThresholds();
+        if (thresholdText) {
+          const span = document.createElement('span');
+          span.className = 'change-tag good';
+          span.textContent = thresholdText;
+          extra.appendChild(span);
+        }
+        // final ceremony triggers ending immediately
+        if (ev.id === 'F-25') {
+          document.getElementById('btn-next-event').style.display = 'none';
+          setTimeout(showEnding, 900);
+        } else {
+          document.getElementById('btn-next-event').style.display = '';
+        }
+        document.getElementById('result-panel').style.display = 'block';
+        updateStats();
+      }
+
+      function renderChanges(changes) {
+        const c = document.getElementById('result-changes');
+        c.innerHTML = '';
+        if (changes.length === 0) {
+          const s = document.createElement('span'); s.className = 'change-tag'; s.textContent = '无变化'; c.appendChild(s);
+        } else {
+          changes.forEach(x => {
+            const s = document.createElement('span');
+            s.className = 'change-tag ' + (x.diff > 0 ? 'up' : 'down');
+            s.textContent = (x.diff > 0 ? '+' : '') + x.diff + ' ' + x.label;
+            c.appendChild(s);
+          });
+        }
+      }
+
+      function checkHonorThresholds() {
+        const th = [350,450,550,650];
+        for (const t of th) {
+          if (state.honor >= t && !state.flags['threshold' + t]) {
+            state.flags['threshold' + t] = true;
+            if (t === 350) return '连长点名表扬，全体心情振奋（荣誉值突破 ' + t + '）';
+            if (t === 450) return '团里内务检查获好评，连队士气高涨（荣誉值突破 ' + t + '）';
+            if (t === 550) return '教官自掏腰包买西瓜，下午的训练都甜了几分（荣誉值突破 ' + t + '）';
+            if (t === 650) return '会操预演获优秀评价，全连离旗更近一步（荣誉值突破 ' + t + '）';
+          }
+        }
+        return '';
+      }
+
+      function updateStats() {
+        GROWTH.forEach(k => setBar('val-' + k, 'bar-' + k, state.growth[k]));
+        DYNAMIC.forEach(k => setBar('val-' + k, 'bar-' + k, state.dynamic[k]));
+        RELATION.forEach(k => setBar('val-' + k, 'bar-' + k, state.relation[k]));
+        document.getElementById('honor-value').textContent = state.honor;
+        document.getElementById('honor-fill').style.width = (state.honor / 10) + '%';
+        const badges = document.getElementById('status-badges');
+        badges.innerHTML = '';
+        if (state.dynamic.stamina < 30) badges.appendChild(makeBadge('状态不佳', 'warn'));
+        if (state.dynamic.mood < 30) badges.appendChild(makeBadge('心不在焉', 'warn'));
+        if (state.dynamic.mood >= 70) badges.appendChild(makeBadge('心情饱满', 'good'));
+        if (state.flags.flagGuard) badges.appendChild(makeBadge('护旗手', 'good'));
+      }
+
+      function setBar(valId, barId, val) {
+        const v = Math.round(val);
+        const lbl = document.getElementById(valId);
+        if (lbl) lbl.textContent = v;
+        const fill = document.getElementById(barId);
+        if (fill) {
+          fill.style.width = v + '%';
+          fill.classList.remove('low','medium','high');
+          if (v < 35) fill.classList.add('low');
+          else if (v < 70) fill.classList.add('medium');
+          else fill.classList.add('high');
+        }
+      }
+
+      function makeBadge(text, cls) {
+        const s = document.createElement('span');
+        s.className = 'status-badge ' + cls;
+        s.textContent = text;
+        return s;
+      }
+
+      function nextTurn() {
+        if (state.chain) {
+          const ev = FIXED_EVENTS[state.chain.id];
+          if (ev && typeof ev.next === 'function') {
+            const next = ev.next(state, state.chain.stage);
+            if (next) { state.chain.stage = next; renderCurrentEvent(); return; }
+          }
+          state.chain = null;
+        }
+        state.slot++;
+        if (state.slot > 5) {
+          state.honorHistory.push(state.todayHonor);
+          state.todayHonor = 0;
+          // NPC base contribution +2 per day
+          state.honor = clamp(state.honor + 2, 0, 1000);
+          state.day++;
+          state.slot = 0;
+          state.flags.collapseToday = false;
+          if (state.day > 14) { showEnding(); return; }
+        }
+        // Counselor safeguard: two consecutive days low mood/stamina
+        if (state.day > 1) {
+          const yesterdayLow = state.flags.yesterdayLow;
+          const todayLow = state.dynamic.mood < 30 || state.dynamic.stamina < 20;
+          if (yesterdayLow && todayLow && !state.flags.counselorTriggered) {
+            state.flags.counselorTriggered = true;
+            state.dynamic.mood = clamp(state.dynamic.mood + 15, 0, 100);
+            state.growth.will = clamp(state.growth.will + 5, 15, 100);
+            // log via a special popup could be added; for now auto-apply
+          }
+          state.flags.yesterdayLow = todayLow;
+        }
+        renderCurrentEvent();
+      }
+
+      function computeEndings() {
+        const g = state.growth;
+        const avg = (g.fitness + g.discipline + g.will + g.unity + g.knowledge) / 5;
+        const titles = [];
+        if (avg >= 70 && g.discipline >= 65) titles.push('优秀学员');
+        if ((state.honorHistory.slice(-2).reduce((a,b)=>a+b,0) || 0) >= 50 && state.honor >= 650 && state.honor < 750) {
+          titles.push('绝地翻盘');
+        } else if (state.honor >= 750) titles.push('冲旗先锋');
+        if (state.hidden.shooting >= 90) titles.push('神枪手（隐藏）');
+        if (g.will >= 85 && state.hidden.marchDone) titles.push('破晓之星（隐藏）');
+        if (GROWTH.every(k => g[k] >= 75)) titles.push('六边形战士（隐藏）');
+        if (g.knowledge >= 80 && state.flags.firstAidHero) titles.push('军迷学霸（隐藏）');
+        if (g.unity >= 80) titles.push('暖心室友（隐藏）');
+        if (state.hidden.fish >= 12 && state.dynamic.mood >= 70) titles.push('佛系新生');
+        if (state.flags.flagGuard) titles.push('护旗手');
+        if (titles.length === 0) titles.push('合格新兵');
+        let flagOutcome;
+        let flagClass;
+        if (state.honor >= 750) { flagOutcome = '夺旗成功——旗交到教官手上，全场欢呼。'; flagClass = 'flag-success'; }
+        else if (state.honor >= 650) {
+          const lastTwo = (state.honorHistory.slice(-2).reduce((a,b)=>a+b,0) || 0);
+          if (lastTwo >= 50) { flagOutcome = '绝地翻盘——最后两天，你们把旗抢了回来。'; flagClass = 'flag-comeback'; }
+          else { flagOutcome = '惜败——旗还在营部，但你们已经是最齐的一届。'; flagClass = 'flag-narrow'; }
+        } else { flagOutcome = '惜败——旗还在营部，但你们每个人都更重了。'; flagClass = 'flag-narrow'; }
+        return { titles, flagOutcome, flagClass };
+      }
+
+      function showEnding() {
+        const end = computeEndings();
+        document.getElementById('end-title').textContent = end.titles.join(' · ');
+        const fo = document.getElementById('flag-outcome');
+        fo.textContent = end.flagOutcome;
+        fo.className = 'flag-outcome ' + end.flagClass;
+        document.getElementById('end-comment').textContent = '十四天后，东川路 800 号的哨声会停，但你带走的成长不会消失。';
+        const tl = document.getElementById('title-list');
+        tl.innerHTML = '';
+        end.titles.forEach(t => { const s = document.createElement('span'); s.className = 'badge'; s.textContent = t; tl.appendChild(s); });
+        GROWTH.forEach(k => setBar('end-' + k, 'end-bar-' + k, state.growth[k]));
+        DYNAMIC.forEach(k => setBar('end-' + k, 'end-bar-' + k, state.dynamic[k]));
+        RELATION.forEach(k => setBar('end-' + k, 'end-bar-' + k, state.relation[k]));
+        const cg = document.getElementById('counter-grid');
+        cg.innerHTML = '';
+        Object.keys(HIDDEN_LABELS).forEach(k => {
+          const d = document.createElement('div'); d.className = 'counter-item';
+          d.innerHTML = '<strong>' + state.hidden[k] + '</strong>' + HIDDEN_LABELS[k];
+          cg.appendChild(d);
+        });
+        document.getElementById('instructor-quote').textContent = '"' + (state.flags.instructorQuote || '旗是连队的，也是每一个人的。') + '"';
+        showScreen('end-screen');
+        drawRadar();
+      }
+
+      function drawRadar() {
+        const ctx = document.getElementById('radar-chart');
+        if (!ctx) return;
+        new Chart(ctx.getContext('2d'), {
+          type: 'radar',
+          data: {
+            labels: ['体魄','纪律','意志','团结','学识'],
+            datasets: [{
+              label: '最终成长五维',
+              data: [state.growth.fitness, state.growth.discipline, state.growth.will, state.growth.unity, state.growth.knowledge],
+              backgroundColor: 'rgba(74, 93, 35, 0.25)',
+              borderColor: '#4A5D23',
+              pointBackgroundColor: '#4A5D23',
+              borderWidth: 2
+            }]
+          },
+          options: {
+            scales: { r: { suggestedMin: 0, suggestedMax: 100, ticks: { stepSize: 20 } } },
+            plugins: { legend: { display: false } }
+          }
+        });
+      }
+
+      // Opening flow
+      function renderOpening() {
+        const q = OPENING[state.openingQ];
+        document.getElementById('opening-question').textContent = q.q;
+        const c = document.getElementById('opening-choices');
+        c.innerHTML = '';
+        q.choices.forEach((ch, i) => {
+          const btn = document.createElement('button');
+          btn.className = 'choice-btn';
+          btn.type = 'button';
+          btn.textContent = ch.text;
+          btn.addEventListener('click', () => {
+            applyEffects(ch.effects);
+            state.openingQ++;
+            if (state.openingQ >= OPENING.length) {
+              state.dynamic.stamina = 85;
+              state.dynamic.mood = 70;
+              state.relation.instructor = 50;
+              state.relation.counselor = 50;
+              state.relation.roommate = 55;
+              state.relation.popularity = 50;
+              state.honor = 300;
+              showScreen('prologue-screen');
+              renderPrologue();
+            } else {
+              renderOpening();
+            }
+          });
+          c.appendChild(btn);
+        });
+      }
+
+      function renderPrologue() {
+        if (state.prologue >= PROLOGUE.length) {
+          showScreen('game-screen');
+          renderCurrentEvent();
+          return;
+        }
+        const p = PROLOGUE[state.prologue];
+        document.getElementById('prologue-title').textContent = p.title;
+        document.getElementById('prologue-desc').textContent = p.desc;
+        document.getElementById('btn-prologue-next').onclick = () => {
+          if (p.effects) applyEffects(p.effects);
+          if (p.setFlags) p.setFlags.forEach(f => state.flags[f] = true);
+          state.prologue++;
+          renderPrologue();
+        };
+      }
+
+      document.getElementById('btn-start').addEventListener('click', () => {
+        resetState();
+        showScreen('opening-screen');
+        renderOpening();
+      });
+      document.getElementById('btn-restart').addEventListener('click', () => {
+        resetState();
+        showScreen('start-screen');
+      });
+      document.getElementById('btn-toggle-stats').addEventListener('click', () => {
+        const p = document.getElementById('full-stats');
+        p.classList.toggle('open');
+      });
+      document.getElementById('btn-next-event').addEventListener('click', nextTurn);
+
+      function resetState() {
+        state = {
+          growth: { fitness:42, discipline:42, will:42, unity:42, knowledge:42 },
+          dynamic: { stamina:85, mood:70 },
+          relation: { instructor:50, counselor:50, roommate:55, popularity:50 },
+          honor: 300,
+          hidden: { persist:0, fish:0, help:0, extra:0, internalPerfect:0, nightChat:0, homesick:0, shooting:0, marchDone:0, keyFlag:0 },
+          flags: {},
+          day: 1, slot: 0,
+          chain: null,
+          openingQ: 0,
+          prologue: 0,
+          history: [],
+          todayHonor: 0,
+          honorHistory: [],
+          lastRandom: {},
+          lastRandomId: null,
+          currentEvent: null,
+          style: {}
+        };
+      }
+
+      resetState();
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,32 @@
+{
+  "data": [
+    {
+      "id": "page-index",
+      "title": "军训文字模拟器",
+      "type": "page",
+      "version": 1,
+      "createdAt": 1787451754000,
+      "canvasData": {
+        "x": 12,
+        "y": 12,
+        "group": 0,
+        "layoutSnapshot": {
+          "version": 1,
+          "contentHeight": 900,
+          "viewportWidth": 1440,
+          "sourceHash": "fnv1a-12052758",
+          "measuredAt": 1787481205899
+        }
+      },
+      "devMetadata": {
+        "htmlSrc": "pages/index.html",
+        "interactions": []
+      }
+    }
+  ],
+  "config": {
+    "autoLayout": false,
+    "deviceType": "desktop",
+    "projectName": "军训文字模拟器"
+  }
+}
